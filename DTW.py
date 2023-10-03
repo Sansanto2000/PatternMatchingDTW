@@ -1,3 +1,5 @@
+from NIST_Table_Reader import NIST_Table_Reader
+
 from astropy.io import fits
 
 from fastdtw import fastdtw
@@ -20,8 +22,12 @@ filepath = "C:\\Users\\santi\\OneDrive\\Documentos\\Doctorado\\EFBTCOMP31.fits"
 #filepath = "C:\\Users\\santi\\OneDrive\\Documentos\\Doctorado\\EFBTOBJ31.fits"
 
 spectral_data = getfileData(filepath=filepath)
-NIST_Reference = None# Extraer con pandas datos de Tabla(NIST)_Int_Long_Mat_Ref.csv
-                # ANTES de extraer probablemente haya que sanitizar los datos.
+
+csv_filename = ".\\Tabla(NIST)_Int_Long_Mat_Ref.csv"
+nisttr = NIST_Table_Reader(csv_filename=csv_filename)
+NIST_Reference = nisttr.get_gaussianized_data()
+    # Extraer con pandas datos de Tabla(NIST)_Int_Long_Mat_Ref.csv
+    # ANTES de extraer probablemente haya que sanitizar los datos.
 
 
 # # OPCION 1: pip install fastdtw
