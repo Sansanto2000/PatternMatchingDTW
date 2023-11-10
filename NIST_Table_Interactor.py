@@ -17,11 +17,15 @@ class NIST_Table_Interactor:
         self.df['Wavelength(Ams)'] = self.df['Wavelength(Ams)'].apply(lambda x: re.sub(r'[^\d.]', '', x))
         self.df['Wavelength(Ams)'] = pd.to_numeric(self.df['Wavelength(Ams)'])
     
-    def get_dataframe(self, cant:int = None) -> pd.DataFrame:
+    def get_dataframe(self, cant:int = None, filter:str=None) -> pd.DataFrame:
+        df = None
         if (cant):
-            return self.df.head(cant)
+            df = self.df.head(cant)
         else:
-            return self.df
+            df = self.df
+        if(filter):
+            df = df[df['Spectrum'] == filter]
+        return df
     
     def _subdivide(self, begin, end, resolution:int) -> list:
         # begin: Longitud de inicio inicial

@@ -23,26 +23,35 @@ def getfileData(filepath):
 def gaussian(x, max_value, mean, std_deviation):
     return max_value * np.exp(-((x - mean) ** 2) / (2 * std_deviation ** 2))
     
+# Datos del espectro a utilizar
 filepath = "C:\\Users\\santi\\OneDrive\\Documentos\\Doctorado\\EFBTCOMP31.fits"
 #filepath = "C:\\Users\\santi\\OneDrive\\Documentos\\Doctorado\\EFBTOBJ31.fits"
-
 spectral_data = getfileData(filepath=filepath)
+print(spectral_data)
+x=range(len(spectral_data))
+y=spectral_data
+plt.figure(figsize=(8, 4))
+plt.plot(x, y)
+plt.xlabel('Index')
+plt.ylabel('Pixel_Val')
+plt.title('Mi Gráfico')
+plt.show()
 
+# Datos de picos del NIST
 csv_filename = ".\\Tabla(NIST)_Int_Long_Mat_Ref.csv"
 nisttr = NIST_Table_Interactor(csv_filename=csv_filename)
-
-df = nisttr.get_dataframe(250)
+df = nisttr.get_dataframe(filter="He I")
+#df = nisttr.get_dataframe()
 x = df['Wavelength(Ams)'].tolist()
 y = df['Intensity'].tolist()
-
-plt.figure(figsize=(12, 6))
+plt.figure(figsize=(8, 4))
 plt.plot(x, y)
 plt.xlabel('Wavelength(Ams)')
 plt.ylabel('Intensity')
 plt.title('Mi Gráfico')
 plt.show()
 
-NIST_Reference = nisttr.get_gaussianized_data()
+#NIST_Reference = nisttr.get_gaussianized_data()
     # Extraer con pandas datos de Tabla(NIST)_Int_Long_Mat_Ref.csv
     # ANTES de extraer probablemente haya que sanitizar los datos.
 
