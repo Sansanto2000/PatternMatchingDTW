@@ -2,12 +2,14 @@ from NIST_Table_Interactor import NIST_Table_Interactor
 
 from astropy.io import fits
 import os
+from enum import Enum
 
 #from fastdtw import fastdtw
 #from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
+from scipy.signal import savgol_filter
 
 def getfileData(filepath):    
     hdul = fits.open(filepath) 
@@ -18,9 +20,6 @@ def getfileData(filepath):
         headers = hdul[0].header
         data = hdul[0].data
     return data
-
-def gaussian(x, max_value, mean, std_deviation):
-    return max_value * np.exp(-((x - mean) ** 2) / (2 * std_deviation ** 2))
 
 def dp(dist_mat):
     """
@@ -98,28 +97,43 @@ filter = "He I"
 # filter = "Rb II"
 df = nisttr.get_dataframe(filter=filter)
 #df = nisttr.get_dataframe()
+
+class Processor:
+    class FuntionType(Enum):
+        LINEAL = "LINEAL"
+        GAUSSIAN = "GAUSSIAN"
+        SG = "SG"
+    def get_procesed(reference, target, tipe = [FuntionType.LINEAL]):
+        x2_equalized_lineal = np.interp(np.linspace(0, 1, len(x1)), np.linspace(0, 1, len(x2)), x2)
+
+
 SIGMA = 7
 x2 = df['Wavelength(Ams)'].tolist()
 x2_equalized_lineal = np.interp(np.linspace(0, 1, len(x1)), np.linspace(0, 1, len(x2)), x2)
 y2 = df['Intensity'].tolist()
 y2_equalized_lineal = np.interp(np.linspace(0, 1, len(y1)), np.linspace(0, 1, len(y2)), y2)
 y2_equalized_gaussian = gaussian_filter1d(y2_equalized_lineal, sigma=SIGMA)
+y2_equalized_SG = savgol_filter(y2_equalized_lineal, window_length=10, polyorder=4)
+
 min_y2 = np.min(y2)
 max_y2 = np.max(y2)
 nor_y2 = (y2 - min_y2) / (max_y2 - min_y2)
 nor_y2_equalized_lineal = (y2_equalized_lineal - min_y2) / (max_y2 - min_y2)
 nor_y2_equalized_gaussian = (y2_equalized_gaussian - min_y2) / (max_y2 - min_y2)
+nor_y2_equalized_SG = (y2_equalized_SG - min_y2) / (max_y2 - min_y2)
+
 plt.figure(figsize=(8, 5))
 plt.plot(x2, nor_y2, color="blue", label=f"{filter}")
 #plt.plot(x2_equalized_lineal, nor_y2_equalized_lineal, color="orange", alpha=0.8, label=f"{filter}++")
-plt.plot(x2_equalized_lineal, nor_y2_equalized_gaussian, color="orange", alpha=0.8, label=f"{filter}++")
+#plt.plot(x2_equalized_lineal, nor_y2_equalized_gaussian, color="orange", alpha=0.8, label=f"{filter}++")
+plt.plot(x2_equalized_lineal, nor_y2_equalized_SG, color="orange", alpha=0.8, label=f"{filter}++")
 plt.title(f'{filter} Ref')
 plt.legend()
 # plt.savefig(f"{filter}_interpoladoLineal++.png")
 plt.savefig(f"{filter}_interpoladoGaussiano_SIGMA={SIGMA}++.png")
 plt.show()
 x2 = x2_equalized_lineal # Comentar si no se quiere suavisar
-nor_y2 = nor_y2_equalized_gaussian # Comentar si no se quiere suavisar
+nor_y2 = nor_y2_equalized_SG # Comentar si no se quiere suavisar
 
 # plt.figure(figsize=(8, 5))
 # plt.plot(x1, nor_y1, color="blue", label="Espectro")
