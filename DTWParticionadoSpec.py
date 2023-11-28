@@ -65,13 +65,14 @@ plt.tight_layout()
 plt.savefig("partionsOfSpec_graph.png")
 plt.show()
 
+#////////////////////////////////////////
 # fig, axs = plt.subplots(num_rows, num_cols, figsize=(8, 5), 
 #                         subplot_kw={'yticks': []})
 # fig.suptitle(f"{filter} Ref")
 # for row in range(num_rows):
 #     for col in range(num_cols):
-#         x = x2_arr[row*num_cols+col]
-#         y = nor_y2_arr[row*num_cols+col]
+#         x = x1_arr[row*num_cols+col]
+#         y = nor_y1_arr[row*num_cols+col]
         
 #         N = nor_y1.shape[0]
 #         M = len(y)
