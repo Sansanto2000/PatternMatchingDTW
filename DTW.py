@@ -1,79 +1,17 @@
 from NIST_Table_Interactor import NIST_Table_Interactor
 
-from astropy.io import fits
 import os
-from enum import Enum
+
 
 #from fastdtw import fastdtw
 #from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import savgol_filter
 
-def getfileData(filepath):    
-    hdul = fits.open(filepath) 
-    if('WOBJ' in filepath):
-        headers = hdul[0].header
-        data = hdul[0].data[0][0]
-    else:
-        headers = hdul[0].header
-        data = hdul[0].data
-    return data
+from utils import dp, getfileData, Processor
 
-def dp(dist_mat):
-    """
-    Find minimum-cost path through matrix `dist_mat` using dynamic programming.
+processor = Processor()
 
-    The cost of a path is defined as the sum of the matrix entries on that
-    path. See the following for details of the algorithm:
-
-    - http://en.wikipedia.org/wiki/Dynamic_time_warping
-    - https://www.ee.columbia.edu/~dpwe/resources/matlab/dtw/dp.m
-
-    The notation in the first reference was followed, while Dan Ellis's code
-    (second reference) was used to check for correctness. Returns a list of
-    path indices and the cost matrix.
-    """
-    N, M = dist_mat.shape
-    # Initialize the cost matrix
-    cost_mat = np.zeros((N + 1, M + 1))
-    for i in range(1, N + 1):
-        cost_mat[i, 0] = np.inf
-    for i in range(1, M + 1):
-        cost_mat[0, i] = np.inf
-    # Fill the cost matrix while keeping traceback information
-    traceback_mat = np.zeros((N, M))
-    for i in range(N):
-        for j in range(M):
-            penalty = [
-                cost_mat[i, j],      # match (0)
-                cost_mat[i, j + 1],  # insertion (1)
-                cost_mat[i + 1, j]]  # deletion (2)
-            i_penalty = np.argmin(penalty)
-            cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
-            traceback_mat[i, j] = i_penalty
-    # Traceback from bottom right
-    i = N - 1
-    j = M - 1
-    path = [(i, j)]
-    while i > 0 or j > 0:
-        tb_type = traceback_mat[i, j]
-        if tb_type == 0:
-            # Match
-            i = i - 1
-            j = j - 1
-        elif tb_type == 1:
-            # Insertion
-            i = i - 1
-        elif tb_type == 2:
-            # Deletion
-            j = j - 1
-        path.append((i, j))
-    # Strip infinity edges from cost_mat before returning
-    cost_mat = cost_mat[1:, 1:]
-    return (path[::-1], cost_mat)
-    
 # Datos del espectro a utilizar
 script_dir = os.path.dirname(os.path.abspath(__file__))
 filepath = os.path.join(script_dir, "EFBTCOMP31.fits")
@@ -86,6 +24,7 @@ y1=spectral_data
 min_y1 = np.min(y1)
 max_y1 = np.max(y1)
 nor_y1 = (y1 - min_y1) / (max_y1 - min_y1)
+#nor_y1 = processor.normalize_min_max(y1)
 
 # Datos de picos del NIST
 #csv_filename = ".\\Tabla(NIST)_Int_Long_Mat_Ref.csv"
@@ -98,34 +37,29 @@ filter = "He I"
 df = nisttr.get_dataframe(filter=filter)
 #df = nisttr.get_dataframe()
 
-class Processor:
-    class FuntionType(Enum):
-        LINEAL = "LINEAL"
-        GAUSSIAN = "GAUSSIAN"
-        SG = "SG"
-    def get_procesed(reference, target, tipe = [FuntionType.LINEAL]):
-        x2_equalized_lineal = np.interp(np.linspace(0, 1, len(x1)), np.linspace(0, 1, len(x2)), x2)
-
-
-SIGMA = 7
+SIGMA = 1
 x2 = df['Wavelength(Ams)'].tolist()
-x2_equalized_lineal = np.interp(np.linspace(0, 1, len(x1)), np.linspace(0, 1, len(x2)), x2)
 y2 = df['Intensity'].tolist()
-y2_equalized_lineal = np.interp(np.linspace(0, 1, len(y1)), np.linspace(0, 1, len(y2)), y2)
-y2_equalized_gaussian = gaussian_filter1d(y2_equalized_lineal, sigma=SIGMA)
-y2_equalized_SG = savgol_filter(y2_equalized_lineal, window_length=10, polyorder=4)
+x2_equalized_lineal = processor.equalized_and_smooth(reference=x1, target=x2, 
+                                            function=Processor.FuntionType.LINEAL)
+y2_equalized_lineal = processor.equalized_and_smooth(reference=y1, target=y2, 
+                                            function=Processor.FuntionType.LINEAL)
+y2_equalized_gaussian = processor.equalized_and_smooth(reference=y1, target=y2, 
+                                                       function=Processor.FuntionType.GAUSSIAN, 
+                                                       sigma=SIGMA)
+y2_equalized_SG = processor.equalized_and_smooth(reference=y1, target=y2, 
+                                                 function=Processor.FuntionType.SG, 
+                                                 window_length=10, polyorder=4)
 
-min_y2 = np.min(y2)
-max_y2 = np.max(y2)
-nor_y2 = (y2 - min_y2) / (max_y2 - min_y2)
-nor_y2_equalized_lineal = (y2_equalized_lineal - min_y2) / (max_y2 - min_y2)
-nor_y2_equalized_gaussian = (y2_equalized_gaussian - min_y2) / (max_y2 - min_y2)
-nor_y2_equalized_SG = (y2_equalized_SG - min_y2) / (max_y2 - min_y2)
+nor_y2, min_y2, max_y2 = processor.normalize_min_max(y2)
+nor_y2_equalized_lineal, _, _ = processor.normalize_min_max(y2_equalized_lineal)
+nor_y2_equalized_gaussian, _, _ = processor.normalize_min_max(y2_equalized_gaussian)
+nor_y2_equalized_SG, _, _ = processor.normalize_min_max(y2_equalized_SG)
 
 plt.figure(figsize=(8, 5))
 plt.plot(x2, nor_y2, color="blue", label=f"{filter}")
 #plt.plot(x2_equalized_lineal, nor_y2_equalized_lineal, color="orange", alpha=0.8, label=f"{filter}++")
-#plt.plot(x2_equalized_lineal, nor_y2_equalized_gaussian, color="orange", alpha=0.8, label=f"{filter}++")
+# plt.plot(x2_equalized_lineal, nor_y2_equalized_gaussian, color="orange", alpha=0.8, label=f"{filter}++")
 plt.plot(x2_equalized_lineal, nor_y2_equalized_SG, color="orange", alpha=0.8, label=f"{filter}++")
 plt.title(f'{filter} Ref')
 plt.legend()
