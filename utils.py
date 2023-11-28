@@ -41,8 +41,8 @@ def dp(dist_mat):
         for j in range(M):
             penalty = [
                 cost_mat[i, j],      # match (0)
-                cost_mat[i, j + 1],  # insertion (1)
-                cost_mat[i + 1, j]]  # deletion (2)
+                cost_mat[i, j + 1],  # insertion (1) * PENALTY
+                cost_mat[i + 1, j]]  # deletion (2) * PENALTY /////////////////
             i_penalty = np.argmin(penalty)
             cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
             traceback_mat[i, j] = i_penalty
