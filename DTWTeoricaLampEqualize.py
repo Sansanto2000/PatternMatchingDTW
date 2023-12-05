@@ -3,8 +3,6 @@ from NIST_Table_Interactor import NIST_Table_Interactor
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.mixture import GaussianMixture
 
 from utils import dp, getfileData, Processor
 processor = Processor()
