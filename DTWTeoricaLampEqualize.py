@@ -69,15 +69,24 @@ path, cost_mat = dp(dist_mat)
 new_lamp_x = [teorico_x_au[tupla[1]] for tupla in path]
 new_lamp_y = [lamp_y[tupla[0]] for tupla in path]
 
-plt.figure(figsize=(8, 5))
-plt.plot(new_lamp_x, new_lamp_y, color="green", alpha=1, label=f"Lampara")
-plt.plot(teorico_x_au, teorico_y_au, color="orange", alpha=0.6, label=f"{filter} calibrado")    
-plt.ylim(0, 1)
-plt.xlabel('\u03BB')
-plt.ylabel('Intensity')
-plt.title("Normalized alignment cost: {:.4f}, SIGMA={}".format(cost_mat[N - 1, M - 1]/(N + M), sigma))
-plt.legend()
-plt.tight_layout()
-plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.plot(new_lamp_x, new_lamp_y, color="green", alpha=1, label=f"Lampara")
+# plt.plot(teorico_x_au, teorico_y_au, color="orange", alpha=0.6, label=f"{filter} calibrado")    
+# plt.ylim(0, 1)
+# plt.xlabel('\u03BB')
+# plt.ylabel('Intensity')
+# plt.title("Normalized alignment cost: {:.4f}, SIGMA={}".format(cost_mat[N - 1, M - 1]/(N + M), sigma))
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
+# plt.show()
+
+rango_lamp = (3400, 4900)
+rango_teorico = (np.min(teorico_x_au), np.max(teorico_y_au))
+min_interior = rango_lamp[0] if rango_teorico[0] > rango_lamp[0] else rango_teorico[0]
+max_interior = rango_lamp[1] if rango_lamp[1] < rango_teorico[1] else rango_teorico[1]
+interseccion = max_interior - min_interior
+
+union = None
+IoU = interseccion / union
 
