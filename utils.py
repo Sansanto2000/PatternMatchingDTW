@@ -3,6 +3,7 @@ from astropy.io import fits
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import savgol_filter
 import numpy as np
+from scipy.stats import norm
 
 def getfileData(filepath):    
     hdul = fits.open(filepath) 
@@ -94,3 +95,13 @@ class Processor:
             max = np.max(target)
         nor_target = (target - min) / (max - min)
         return nor_target, min, max
+    
+    def gaussianice(self, x, y, resolution:int, sigma:float): 
+        x_au = np.linspace(np.min(x), np.max(x), resolution)
+        y_au = np.zeros_like(x_au)
+        for i in range(len(y)):
+            mu = x[i]
+            pdf = norm.pdf(x_au, mu, sigma)
+            pdf, _, _ = self.normalize_min_max(pdf)
+            y_au += (pdf * y[i])        
+        return x_au, y_au
