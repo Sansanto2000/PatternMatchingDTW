@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from astropy.io import fits
 from scipy.ndimage import gaussian_filter1d
@@ -93,11 +94,17 @@ class Processor:
             min = np.min(target)
         if(not max):
             max = np.max(target)
+        if(max==min):
+            return target, min, max
         nor_target = (target - min) / (max - min)
         return nor_target, min, max
     
-    def gaussianice(self, x, y, resolution:int, sigma:float): 
-        x_au = np.linspace(np.min(x), np.max(x), resolution)
+    def gaussianice(self, x, y, resolution:int, sigma:float, rang=None): 
+        if(rang):
+            x_au = np.linspace(rang[0], rang[1], resolution)
+            print(x_au)
+        else:
+            x_au = np.linspace(np.min(x), np.max(x), resolution)
         y_au = np.zeros_like(x_au)
         for i in range(len(y)):
             mu = x[i]

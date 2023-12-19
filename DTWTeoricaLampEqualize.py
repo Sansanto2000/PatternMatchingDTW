@@ -19,16 +19,16 @@ lamp_y = lamp_data
 # nor_lamp_y = (lamp_y - min_lamp_y) / (max_lamp_y - min_lamp_y)
 lamp_y, _, _ = processor.normalize_min_max(lamp_y)
 
-plt.figure(figsize=(8, 5))
-plt.plot(lamp_x, lamp_y, color="green", alpha=1, label=f"Lampara")
-plt.ylim(0, 1)
-plt.xlabel('\u03BB')
-plt.ylabel('Intensity')
-plt.title("Lampara")
-plt.legend()
-plt.tight_layout()
-plt.savefig(f"Lampara.png")
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.plot(lamp_x, lamp_y, color="green", alpha=1, label=f"Lampara")
+# plt.ylim(0, 1)
+# plt.xlabel('\u03BB')
+# plt.ylabel('Intensity')
+# plt.title("Lampara")
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig(f"Lampara.png")
+# plt.show()
 
 # Datos de picos del NIST
 csv_filename = os.path.join(script_dir, "Tabla(NIST)_Int_Long_Mat_Ref.csv")
@@ -81,12 +81,77 @@ new_lamp_y = [lamp_y[tupla[0]] for tupla in path]
 # plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
 # plt.show()
 
-rango_lamp = (3400, 4900)
-rango_teorico = (np.min(teorico_x_au), np.max(teorico_y_au))
-min_interior = rango_lamp[0] if rango_teorico[0] > rango_lamp[0] else rango_teorico[0]
-max_interior = rango_lamp[1] if rango_lamp[1] < rango_teorico[1] else rango_teorico[1]
-interseccion = max_interior - min_interior
+#/////////////////////////////////////// 
+# DTW por partes
 
-union = None
-IoU = interseccion / union
+# min_interior = rango_lamp[0] if rango_teorico[0] > rango_lamp[0] else rango_teorico[0]
+# max_interior = rango_lamp[1] if rango_lamp[1] < rango_teorico[1] else rango_teorico[1]
+# interseccion = max_interior - min_interior
+# union = None
+# IoU = interseccion / union
+
+def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
+    ranges = []
+    sub_arrs_x = []
+    sub_arrs_y = []
+    inicio = 0 #arr_x[0]
+    pos = 0
+    while inicio < (arr_x[len(arr_x)-1]):
+        fin = inicio + W_RANGE
+        arr_aux=[]
+        arr_auy=[]
+        i = pos
+        while i<len(arr_x) and arr_x[i]<fin:
+            arr_aux.append(arr_x[i])
+            arr_auy.append(arr_y[i])
+            i+=1
+        pos=i
+        ranges.append((inicio, fin))
+        inicio=inicio+STEP
+        sub_arrs_x.append(arr_aux)
+        sub_arrs_y.append(arr_auy)
+    return ranges, sub_arrs_x, sub_arrs_y
+
+W_RANGE = 2000
+STEP = 300
+SIGMA = 50
+
+ranges, slices_x, slices_y = slice_with_range_step(teorico_x, teorico_y, W_RANGE, STEP)
+slices_x_au = []
+slices_y_au = []
+print("lamp_X=",len(lamp_x))
+for k in range(0, len(slices_x)): # <== Meter graficos de las rebanadas
+    slice_x_au, slice_y_au = processor.gaussianice(x=slices_x[k], y=slices_y[k], 
+                                                    resolution=len(lamp_x), sigma=sigma,
+                                                    rang=ranges[k])    
+    slice_y_au, _, _ = processor.normalize_min_max(slice_y_au)
+    slices_x_au.append(slice_x_au)
+    slices_y_au.append(slice_y_au)
+
+for k in range(0, len(slices_x)):
+    N = lamp_y.shape[0]
+    M = len(slices_y[k])
+    dist_mat = np.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            dist_mat[i, j] = abs(lamp_y[i] - slices_y[k][j])
+    if dist_mat.size == 0:
+        continue
+    path, cost_mat = dp(dist_mat)
+
+    new_lamp_x = [slices_x[k][tupla[1]] for tupla in path]
+    new_lamp_y = [lamp_y[tupla[0]] for tupla in path]
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(new_lamp_x, new_lamp_y, color="green", alpha=1, label=f"Lampara")
+    plt.plot(slices_x[k], slices_y[k], color="orange", alpha=0.6, label=f"{filter} calibrado")    
+    print(len(new_lamp_y), len(slices_y[k]))
+    plt.ylim(0, 1)
+    plt.xlabel('\u03BB')
+    plt.ylabel('Intensity')
+    plt.title(f"Range = {ranges[k]}")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
+    plt.show()
 
