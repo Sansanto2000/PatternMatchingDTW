@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import dp, getfileData, Processor
+from utils import dp, getfileData, Processor, normalize_min_max
 processor = Processor()
 
 # Datos del espectro a utilizar
@@ -17,7 +17,7 @@ lamp_y = lamp_data
 # min_lamp_y = np.min(lamp_y)
 # max_lamp_y = np.max(lamp_y)
 # nor_lamp_y = (lamp_y - min_lamp_y) / (max_lamp_y - min_lamp_y)
-lamp_y, _, _ = processor.normalize_min_max(lamp_y)
+lamp_y, _, _ = normalize_min_max(lamp_y)
 
 # plt.figure(figsize=(8, 5))
 # plt.plot(lamp_x, lamp_y, color="green", alpha=1, label=f"Lampara")
@@ -40,7 +40,7 @@ filter = "He I"
 teorico_df = nisttr.get_dataframe(filter=filter)
 teorico_x = teorico_df['Wavelength(Ams)'].tolist()
 teorico_y = teorico_df['Intensity'].tolist()
-teorico_y, _, _ = processor.normalize_min_max(target=teorico_y)
+teorico_y, _, _ = normalize_min_max(target=teorico_y)
 
 sigma= 50
 teorico_x_au, teorico_y_au = processor.gaussianice(x=teorico_x, y=teorico_y, 
