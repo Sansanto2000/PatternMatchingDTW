@@ -1,11 +1,9 @@
 from NIST_Table_Interactor import NIST_Table_Interactor
-
+from DTW import dp
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
-
-from utils import dp, getfileData, Processor, normalize_min_max
+from utils import dp, getfileData, Processor, normalize_min_max, slice_with_range_step, gaussianice
 processor = Processor()
 
 # Datos del espectro a utilizar
@@ -90,28 +88,6 @@ new_lamp_y = [lamp_y[tupla[0]] for tupla in path]
 # union = None
 # IoU = interseccion / union
 
-def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
-    ranges = []
-    sub_arrs_x = []
-    sub_arrs_y = []
-    inicio = 0 #arr_x[0]
-    pos = 0
-    while inicio < (arr_x[len(arr_x)-1]):
-        fin = inicio + W_RANGE
-        arr_aux=[]
-        arr_auy=[]
-        i = pos
-        while i<len(arr_x) and arr_x[i]<fin:
-            arr_aux.append(arr_x[i])
-            arr_auy.append(arr_y[i])
-            i+=1
-        pos=i
-        ranges.append((inicio, fin))
-        inicio=inicio+STEP
-        sub_arrs_x.append(arr_aux)
-        sub_arrs_y.append(arr_auy)
-    return ranges, sub_arrs_x, sub_arrs_y
-
 W_RANGE = 2000
 STEP = 300
 SIGMA = 50
@@ -121,10 +97,10 @@ slices_x_au = []
 slices_y_au = []
 print("lamp_X=",len(lamp_x))
 for k in range(0, len(slices_x)): # <== Meter graficos de las rebanadas
-    slice_x_au, slice_y_au = processor.gaussianice(x=slices_x[k], y=slices_y[k], 
+    slice_x_au, slice_y_au = gaussianice(x=slices_x[k], y=slices_y[k], 
                                                     resolution=len(lamp_x), sigma=sigma,
                                                     rang=ranges[k])    
-    slice_y_au, _, _ = processor.normalize_min_max(slice_y_au)
+    slice_y_au, _, _ = normalize_min_max(slice_y_au)
     slices_x_au.append(slice_x_au)
     slices_y_au.append(slice_y_au)
 

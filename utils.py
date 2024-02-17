@@ -65,7 +65,6 @@ def gaussianice(x:list, y:list, resolution:int, sigma:float, rang=None):
     """
     if(rang):
         x_au = np.linspace(rang[0], rang[1], resolution)
-        print(x_au)
     else:
         x_au = np.linspace(np.min(x), np.max(x), resolution)
     y_au = np.zeros_like(x_au)
@@ -76,58 +75,44 @@ def gaussianice(x:list, y:list, resolution:int, sigma:float, rang=None):
         y_au += (pdf * y[i])        
     return x_au, y_au
 
-def dp(dist_mat):
+def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
+    """Divide en varios subarreglos los datos correspondientes al eje X y el eje Y de una funcion
+
+    Args:
+        arr_x (numpy.ndarray): Arreglo con los datos de la funcion correspondientes al eje X
+        arr_y (numpy.ndarray): Arreglo con los datos de la funcion correspondientes al eje Y
+        W_RANGE (_type_): Rango de valores que una ventana cubre a partir de su inicio
+        STEP (_type_): Cantidad de valores a considerar entre cada inicio de recorte
+
+    Returns:
+        numpy.ndarray: Arreglo de tuplas en el que cada tupla contiene los datos correspondientes al inicio y fin en el eje
+        X de cada recorte
+        numpy.ndarray: Arreglo con los datos de la funcion resultante correspondientes al eje X
+        numpy.ndarray: Arreglo con los datos de la funcion resultante correspondientes al eje Y
     """
-    Find minimum-cost path through matrix `dist_mat` using dynamic programming.
-
-    The cost of a path is defined as the sum of the matrix entries on that
-    path. See the following for details of the algorithm:
-
-    - http://en.wikipedia.org/wiki/Dynamic_time_warping
-    - https://www.ee.columbia.edu/~dpwe/resources/matlab/dtw/dp.m
-
-    The notation in the first reference was followed, while Dan Ellis's code
-    (second reference) was used to check for correctness. Returns a list of
-    path indices and the cost matrix.
-    """
-    N, M = dist_mat.shape
-    # Initialize the cost matrix
-    cost_mat = np.zeros((N + 1, M + 1))
-    for i in range(1, N + 1):
-        cost_mat[i, 0] = np.inf
-    for i in range(1, M + 1):
-        cost_mat[0, i] = np.inf
-    # Fill the cost matrix while keeping traceback information
-    traceback_mat = np.zeros((N, M))
-    for i in range(N):
-        for j in range(M):
-            penalty = [
-                cost_mat[i, j],      # match (0)
-                cost_mat[i, j + 1],  # insertion (1) * PENALTY
-                cost_mat[i + 1, j]]  # deletion (2) * PENALTY /////////////////
-            i_penalty = np.argmin(penalty)
-            cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
-            traceback_mat[i, j] = i_penalty
-    # Traceback from bottom right
-    i = N - 1
-    j = M - 1
-    path = [(i, j)]
-    while i > 0 or j > 0:
-        tb_type = traceback_mat[i, j]
-        if tb_type == 0:
-            # Match
-            i = i - 1
-            j = j - 1
-        elif tb_type == 1:
-            # Insertion
-            i = i - 1
-        elif tb_type == 2:
-            # Deletion
-            j = j - 1
-        path.append((i, j))
-    # Strip infinity edges from cost_mat before returning
-    cost_mat = cost_mat[1:, 1:]
-    return (path[::-1], cost_mat)
+    ranges = []
+    sub_arrs_x = []
+    sub_arrs_y = []
+    inicio = 0 #arr_x[0]
+    
+    while inicio < (arr_x[len(arr_x)-1]):
+        fin = inicio + W_RANGE
+        arr_aux=[]
+        arr_auy=[]
+        i = 0
+        
+        while i<len(arr_x) and arr_x[i]<fin:
+            if (arr_x[i]>=inicio):
+                arr_aux.append(arr_x[i])
+                arr_auy.append(arr_y[i])
+            i+=1
+        
+        ranges.append((inicio, fin))
+        inicio=inicio+STEP
+        sub_arrs_x.append(arr_aux)
+        sub_arrs_y.append(arr_auy)
+        
+    return ranges, sub_arrs_x, sub_arrs_y
 
 class Processor:
     class FuntionType(Enum):
