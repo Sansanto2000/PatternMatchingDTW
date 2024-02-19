@@ -7,15 +7,13 @@ from NIST_Table_Interactor import NIST_Table_Interactor
 
 # Datos y headers del observado
 script_dir = os.path.dirname(os.path.abspath(__file__))
-filepath = os.path.join(script_dir, "EFBTCOMP31.fits")
+filepath = os.path.join(script_dir, "EFBTCOMPs")
+filepath = os.path.join(filepath, "EFBTCOMP31.fits")
 obs_data, obs_headers = getfileData(filepath=filepath)
 
-# Calibracion de cada dato del arreglo observado respecto a los headers observados
-wav_arr = calibrate_with_observations(obs_data=obs_data, crval1=obs_headers['CRVAL1'], crpix1=obs_headers['CD1_1'])
-
 # Longitud de onda minima y maxima del observado calibrado
-obs_long_min = wav_arr[0]
-obs_long_max = wav_arr[len(wav_arr)-1]
+obs_long_min = obs_headers['CRVAL1'] + 0*obs_headers['CD1_1']
+obs_long_max = obs_headers['CRVAL1'] + (len(obs_data)-1)*obs_headers['CD1_1']
 
 # Separacion de datos observados para el eje X y el eje Y
 obs_x = range(len(obs_data))
@@ -76,16 +74,3 @@ for k in range(0, len(slices_x)):
     print(f"IoU={IoU(slice_x_gau[0], slice_x_gau[len(slice_x_gau)-1], obs_long_min, obs_long_max)}") # IoU 
     print("Normalized alignment cost={:.4f}".format(NorAlgCos)) # Normalized alignment cost
     print("-----------------")
-    
-    # plt.figure(figsize=(8, 5))
-    # plt.plot(new_lamp_x, new_lamp_y, color="green", alpha=1, label=f"Lampara")
-    # plt.plot(slices_x[k], slices_y[k], color="orange", alpha=0.6, label=f"{filter} calibrado")    
-    # print(len(new_lamp_y), len(slices_y[k]))
-    # plt.ylim(0, 1)
-    # plt.xlabel('\u03BB')
-    # plt.ylabel('Intensity')
-    # plt.title(f"Range = {ranges[k]}")
-    # plt.legend()
-    # plt.tight_layout()
-    # plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
-    # plt.show()
