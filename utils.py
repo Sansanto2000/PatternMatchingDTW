@@ -22,7 +22,7 @@ def getfileData(filepath:str):
     else:
         headers = hdul[0].header
         data = hdul[0].data
-    return data
+    return data, headers
 
 def normalize_min_max(target, min:int=None, max:int=None):
     """Dada un arreglo de datos objetivo se normalizan sus valores entre cero y uno
@@ -113,6 +113,27 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
         sub_arrs_y.append(arr_auy)
         
     return ranges, sub_arrs_x, sub_arrs_y
+
+def calibrate_with_observations(obs_data:np.ndarray, crval1:float, crpix1:float) -> list:
+    """Función que calibra un conjunto de obserbaciones en longitud de onda segun los parametros
+    de observación disponibles
+
+    Args:
+        obs_data (np.ndarray): Arreglo de datos con las intensidades*pixel obserbadas
+        crval1 (float): Valor de longitud de onda inicial a considerar para la calibración
+        crpix1 (float): Valor de longitud de onda por paso a considerar para la calibración
+
+    Returns:
+        list: Arreglo de datos con las intensidades*longitudDeOnda calibrados
+    """
+    
+    # Calibracion de cada dato del arreglo observado respecto a los parametros recividos
+    wav_arr = []
+    for i in range(len(obs_data)):
+        wav_arr.append(crval1+i*crpix1)
+        
+    return wav_arr
+    
 
 class Processor:
     class FuntionType(Enum):

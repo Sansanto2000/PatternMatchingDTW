@@ -2,13 +2,20 @@ import IOU
 import os
 from DTW import DTW
 from IOU import IoU
-from utils import getfileData, normalize_min_max, gaussianice, slice_with_range_step
+from utils import getfileData, normalize_min_max, gaussianice, slice_with_range_step, calibrate_with_observations
 from NIST_Table_Interactor import NIST_Table_Interactor
 
-# Datos del observado
+# Datos y headers del observado
 script_dir = os.path.dirname(os.path.abspath(__file__))
 filepath = os.path.join(script_dir, "EFBTCOMP31.fits")
-obs_data = getfileData(filepath=filepath)
+obs_data, obs_headers = getfileData(filepath=filepath)
+
+# Calibracion de cada dato del arreglo observado respecto a los headers observados
+wav_arr = calibrate_with_observations(obs_data=obs_data, crval1=obs_headers['CRVAL1'], crpix1=obs_headers['CD1_1'])
+
+# Longitud de onda minima y maxima del observado calibrado
+obs_long_min = wav_arr[0]
+obs_long_max = wav_arr[len(wav_arr)-1]
 
 # Separacion de datos observados para el eje X y el eje Y
 obs_x = range(len(obs_data))
@@ -66,8 +73,7 @@ for k in range(0, len(slices_x)):
     
     # Informe por consola de metricas resultantes de cada calibración tentativa
     print("-----------------")
-    #print("IoU="+IoU(slice_x_gau[0], slice_x_gau[0], real_min, real_max)) # IoU (falta recuperar metadata del archivo de calibracion original
-                                                        # para asi conocer las longitudes de onda maxima y minima reales)
+    print(f"IoU={IoU(slice_x_gau[0], slice_x_gau[len(slice_x_gau)-1], obs_long_min, obs_long_max)}") # IoU 
     print("Normalized alignment cost={:.4f}".format(NorAlgCos)) # Normalized alignment cost
     print("-----------------")
     
@@ -83,4 +89,3 @@ for k in range(0, len(slices_x)):
     # plt.tight_layout()
     # plt.savefig(f"CalibradoConHeIGaussS={sigma}.png")
     # plt.show()
-
