@@ -40,5 +40,5 @@ def IoU(obs_min:float, obs_max:float, real_min:float, real_max:float) -> float:
         # Rea: |----|
 
     union = real_max - real_min + obs_max - obs_min - interseccion
-    iou = union / interseccion
+    iou =  interseccion / union
     return iou
