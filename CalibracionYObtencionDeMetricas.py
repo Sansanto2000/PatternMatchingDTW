@@ -24,8 +24,7 @@ def calibrate_and_obtain_metrics(filename:str, step:int, w_length:int, sigma:int
     """
     # Datos y headers del observado
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    #filename = "EFBTCOMP31.fits"
-    filepath = os.path.join(script_dir, "EFBTCOMPs")
+    filepath = os.path.join(script_dir, "WCOMPs")
     filepath = os.path.join(filepath, filename)
     obs_data, obs_headers = getfileData(filepath=filepath)
 
@@ -88,13 +87,13 @@ def calibrate_and_obtain_metrics(filename:str, step:int, w_length:int, sigma:int
     return Calibrations
 
 # Archivos de datos observados para analizar
-FILES = ["EFBTCOMP01.fits", "EFBTCOMP02.fits", "EFBTCOMP03.fits", "EFBTCOMP04.fits", "EFBTCOMP05.fits",
-         "EFBTCOMP06.fits", "EFBTCOMP07.fits", "EFBTCOMP08.fits", "EFBTCOMP09.fits", "EFBTCOMP10.fits",
-         "EFBTCOMP11.fits", "EFBTCOMP12.fits", "EFBTCOMP13.fits", "EFBTCOMP14.fits", "EFBTCOMP15.fits",
-         "EFBTCOMP16.fits", "EFBTCOMP17.fits", "EFBTCOMP18.fits", "EFBTCOMP19.fits", "EFBTCOMP20.fits",
-         "EFBTCOMP21.fits", "EFBTCOMP22.fits", "EFBTCOMP23.fits", "EFBTCOMP24.fits", "EFBTCOMP25.fits",
-         "EFBTCOMP26.fits", "EFBTCOMP27.fits", "EFBTCOMP28.fits", "EFBTCOMP29.fits", "EFBTCOMP30.fits",
-         "EFBTCOMP31.fits"]
+FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP05.fits",
+         "WCOMP06.fits", "WCOMP07.fits", "WCOMP08.fits", "WCOMP09.fits", "WCOMP10.fits",
+         "WCOMP11.fits", "WCOMP12.fits", "WCOMP13.fits", "WCOMP14.fits", "WCOMP15.fits",
+         "WCOMP16.fits", "WCOMP17.fits", "WCOMP18.fits", "WCOMP19.fits", "WCOMP20.fits",
+         "WCOMP21.fits", "WCOMP22.fits", "WCOMP23.fits", "WCOMP24.fits", "WCOMP25.fits",
+         "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", "WCOMP30.fits",
+         "WCOMP31.fits"]
 
 # Definición de constantes
 SIGMA = 50
