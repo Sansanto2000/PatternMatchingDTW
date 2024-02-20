@@ -108,7 +108,7 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
             i+=1
         
         ranges.append((inicio, fin))
-        inicio=inicio+STEP
+        inicio += STEP
         sub_arrs_x.append(arr_aux)
         sub_arrs_y.append(arr_auy)
         

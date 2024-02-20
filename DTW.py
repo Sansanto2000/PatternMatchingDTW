@@ -72,7 +72,10 @@ def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray):
     Returns:
         np.ndarray: Arreglo resultante para el eje X
         np.ndarray: Arreglo resultante para el eje Y
-        numpy.float64: Metrica 'Normalized alignment cost'
+        numpy.float64: Metrica 'Normalized Alignment Cost'. Un NAC cercano a cero indica una mejor similitud 
+        entre las series temporales, tambien sugiere que las dos secuencias están alineadas de manera óptima 
+        y son más similares. Un valor lejano a 0 indica que las series temporales son distintas y que no se 
+        alinean de forma optima
     """
     N = arr1.shape[0]
     M = len(arr2)
