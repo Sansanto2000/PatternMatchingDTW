@@ -1,10 +1,9 @@
-import IOU
 import os
 from DTW import DTW
 from IOU import IoU
 from tqdm import tqdm
 from Calibration import Calibration
-from utils import getfileData, normalize_min_max, gaussianice, slice_with_range_step, calibrate_with_observations
+from utils import getfileData, normalize_min_max, gaussianice, slice_with_range_step
 from NIST_Table_Interactor import NIST_Table_Interactor
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,7 +19,7 @@ def calibrate_and_obtain_metrics(filename:str, step:int, w_length:int, sigma:int
         sigma (int): Sigma a utilizar durante el proceso de gaussianizado
 
     Returns:
-        Calibration: arreglo con las calibraciónes realizadas
+        list[Calibration]: Arreglo con las calibraciónes realizadas
     """
     # Datos y headers del observado
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -90,15 +89,15 @@ def calibrate_and_obtain_metrics(filename:str, step:int, w_length:int, sigma:int
 FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP05.fits",
          "WCOMP06.fits", "WCOMP07.fits", "WCOMP08.fits", "WCOMP09.fits", "WCOMP10.fits",
          "WCOMP11.fits", "WCOMP12.fits", "WCOMP13.fits", "WCOMP14.fits", "WCOMP15.fits",
-         "WCOMP16.fits", "WCOMP17.fits", "WCOMP18.fits", "WCOMP19.fits", "WCOMP20.fits",
-         "WCOMP21.fits", "WCOMP22.fits", "WCOMP23.fits", "WCOMP24.fits", "WCOMP25.fits",
-         "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", "WCOMP30.fits",
-         "WCOMP31.fits"]
+         "WCOMP16.fits", "WCOMP17.fits", "WCOMP18.fits", "WCOMP19.fits", "WCOMP20_A.fits",
+         "WCOMP20_A.fits", "WCOMP21.fits", "WCOMP22.fits", "WCOMP23.fits", "WCOMP24.fits", 
+         "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
+         "WCOMP30.fits", "WCOMP31.fits"]
 
 # Definición de constantes
 SIGMA = 50
-STEP = 400 
-W_RANGE = 1000
+STEP = 600 
+W_RANGE = 1800
 
 # inicializacion de variables para graficos posteriores
 dist_entre_optima_y_determinada = {}
@@ -122,6 +121,9 @@ for filename in FILES:
     
     # +1 en la posicion del arreglo de distancias que le corresponda a la diferencia entre best_IoU_pos y best_NAC_pos
     pos = abs(best_IoU_pos - best_NAC_pos)
+    print(f"IOU={calibrations[best_IoU_pos].IoU}")
+    print(f"NAC={calibrations[best_NAC_pos].NaC}")
+    print(f"Pos={pos}")
     dist_entre_optima_y_determinada[pos] = dist_entre_optima_y_determinada.get(pos, 0) + 1
 
 # Creación del arreglo a emplear para el grafico del histograma

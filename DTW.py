@@ -77,7 +77,10 @@ def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray):
         y son más similares. Un valor lejano a 0 indica que las series temporales son distintas y que no se 
         alinean de forma optima
     """
-    N = arr1.shape[0]
+    if (type(arr1)==list):
+        N = len(arr1)
+    else:
+        N = arr1.shape[0]
     M = len(arr2)
     
     dist_mat = np.zeros((N, M))
