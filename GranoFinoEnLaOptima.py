@@ -1,6 +1,12 @@
 import os
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+from Calibration import Calibration
 from NIST_Table_Interactor import NIST_Table_Interactor
 from utils import normalize_min_max, getfileData, subconj_generator
+from DTW import DTW
+from IOU import IoU
 
 # Datos y headers del observado
 filename = "WCOMP01.fits"
@@ -21,8 +27,20 @@ obs_y = obs_data
 obs_y, _, _ = normalize_min_max(obs_y)
 
 # Busqueda de los picos empiricos
-#Scipy peak_find
+picos_x, _ = find_peaks(obs_y, height=0.025)
+picos_y = obs_y[picos_x]
 
+# Conversion necesaria para el graficado
+obs_x = np.array(obs_x)
+picos_x = np.array(picos_x, dtype=int)
+
+# Graficar la señal y los picos
+plt.plot(obs_x, obs_y, label='Señal')
+plt.plot(picos_x, picos_y, 'ro', label='Picos', alpha=0.5)
+plt.legend()
+plt.savefig('peakFinder.png')
+plt.show()
+plt.clf()
 
 # Datos de teoricos del NIST
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -45,5 +63,23 @@ teo_x, teo_y, _, _ = subconj_generator(teo_x, teo_y, obs_long_min, obs_long_max)
 # Normalizado de los datos teoricos en el eje Y
 teo_y, _, _ = normalize_min_max(target=teo_y)
 
-print(len(teo_x))
+# Aplicación DTW del teorico respecto al recorte correcto del teorico
+cal_X, cal_Y, NorAlgCos = DTW(picos_y, teo_y, teo_x)
+
+# Determinación de la metrica IoU
+Iou = IoU(teo_x[0], teo_x[-1], obs_long_min, obs_long_max)
+
+# Agrupación de los datos relevantes de la calibración en un objeto y agregado a la lista calibrations
+cal = Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos)
+
+print(f"IoU={cal.IoU}, NAC={cal.NaC}")
+
+"""Hacer un iterador que aplique variaciones en pesos de penalizacion y borrado"""
+#plt.bar(picos_x, picos_y, label='Empirico', color='yellow') 
+#plt.bar(teo_x, teo_y, label='Teorico', color='green')
+plt.bar(cal.arr_X, cal.arr_Y, label='calibrado', color='orange')
+plt.legend()
+plt.show()
+
+
 
