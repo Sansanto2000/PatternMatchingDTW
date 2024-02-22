@@ -1,6 +1,6 @@
 import numpy as np
     
-def dp(dist_mat):
+def dp(dist_mat,penalty_matrix = np.array([1,1,1])):
     """
     Find minimum-cost path through matrix `dist_mat` using dynamic programming.
 
@@ -32,6 +32,7 @@ def dp(dist_mat):
                 cost_mat[i, j],      # match (0)
                 cost_mat[i, j + 1],  # insertion (1) * PENALTY
                 cost_mat[i + 1, j]]  # deletion (2) * PENALTY /////////////////
+            penalty*=penalty_matrix
             i_penalty = np.argmin(penalty)
             cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
             traceback_mat[i, j] = i_penalty

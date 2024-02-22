@@ -3,44 +3,10 @@ import random
 from tqdm import tqdm
 from Calibration import Calibration
 from NIST_Table_Interactor import NIST_Table_Interactor
-from utils import normalize_min_max, slice_with_range_step, gaussianice
+from utils import normalize_min_max, slice_with_range_step, gaussianice, subconj_generator
 from DTW import DTW
 from IOU import IoU
 import pandas as pd
-import csv
-
-def subconj_generator_as_obs(conj_x:list, conj_y:list, value_min:int, value_max:int):
-    """Funcion que en base un subconjunto de datos correspondientes a una funcion genera
-    un subconjunto de los mismos teniendo en cuenta determinados valores max y min que 
-    puede tomar el eje X del subconjunto
-
-    Args:
-        conj_x (list): Arreglo de datos del eje X
-        conj_y (list): arreglo de datos del eje Y
-        value_min (int): Valor minimo que puede tener el subconjunto en el eje X
-        value_max (int): Valor maximo que puede tener el subconjunto en el eje X
-
-    Returns:
-        list: Arreglo de datos del subconjunto para el eje X
-        list: Arreglo de datos del subconjunto para el eje Y
-        int: Valor minimo real que tiene el subconjunto en el eje X
-        int: Valor maximo real que tiene el subconjunto en el eje X
-    """
-    # Determinación de subconjunto del teorico a usar como observado
-    sub_x = []
-    sub_y = []
-    for i in range(len(conj_x)):
-        if (value_min <= conj_x[i] and conj_x[i] <= value_max):
-            sub_x.append(conj_x[i])
-            sub_y.append(conj_y[i])
-        elif (conj_x[i] > value_max):
-            break
-        
-    # Redeterminacion de min y max del subconjunto con valores reales
-    sub_min = teo_x[0]
-    sub_max = teo_x[-1]
-    
-    return sub_x, sub_y, sub_min, sub_max
 
 def calibrate_and_obtain_metrics(teo_x:list, teo_y:list, obs_x:list, obs_y:list, obs_long_min:int, 
                                  obs_long_max:int,step:int,  w_length:int, sigma:int) -> list:
@@ -125,7 +91,7 @@ for i in tqdm(range(ITERATIONS), desc=f'Porcentaje de avance'):
     sub_max = sub_min + random.randint(W_RANGE - STEP, W_RANGE + STEP)
 
     # Determinación de subconjunto del teorico a usar como observado
-    sub_x, sub_y, _, _ = subconj_generator_as_obs(teo_x, teo_y, sub_min, sub_max)
+    sub_x, sub_y, _, _ = subconj_generator(teo_x, teo_y, sub_min, sub_max)
 
     # Tratamiento de los datos del eje X para que parescan observados
     sub_x, sub_y = gaussianice(x=sub_x, y=sub_y, resolution=300, sigma=SIGMA, rang=(sub_min, sub_max))    

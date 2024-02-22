@@ -133,6 +133,39 @@ def calibrate_with_observations(obs_data:np.ndarray, crval1:float, crpix1:float)
         wav_arr.append(crval1+i*crpix1)
         
     return wav_arr
+
+def subconj_generator(conj_x:list, conj_y:list, value_min:int, value_max:int):
+    """Funcion que en base un subconjunto de datos correspondientes a una funcion genera
+    un subconjunto de los mismos teniendo en cuenta determinados valores max y min que 
+    puede tomar el eje X del subconjunto
+
+    Args:
+        conj_x (list): Arreglo de datos del eje X
+        conj_y (list): arreglo de datos del eje Y
+        value_min (int): Valor minimo que puede tener el subconjunto en el eje X
+        value_max (int): Valor maximo que puede tener el subconjunto en el eje X
+
+    Returns:
+        list: Arreglo de datos del subconjunto para el eje X
+        list: Arreglo de datos del subconjunto para el eje Y
+        int: Valor minimo real que tiene el subconjunto en el eje X
+        int: Valor maximo real que tiene el subconjunto en el eje X
+    """
+    # Determinación de subconjunto del teorico a usar como observado
+    sub_x = []
+    sub_y = []
+    for i in range(len(conj_x)):
+        if (value_min <= conj_x[i] and conj_x[i] <= value_max):
+            sub_x.append(conj_x[i])
+            sub_y.append(conj_y[i])
+        elif (conj_x[i] > value_max):
+            break
+        
+    # Redeterminacion de min y max del subconjunto con valores reales
+    sub_min = conj_x[0]
+    sub_max = conj_x[-1]
+    
+    return sub_x, sub_y, sub_min, sub_max
     
 
 class Processor:

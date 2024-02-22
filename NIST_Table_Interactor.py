@@ -40,6 +40,9 @@ class NIST_Table_Interactor:
             df = self.df
             
         if (filter):
-            df = df[df['Spectrum'] == filter]
+            if (type(filter) == str):
+                df = df[df['Spectrum'] == filter]
+            else:
+                df = df[df['Spectrum'].isin(filter)]
             
         return df
