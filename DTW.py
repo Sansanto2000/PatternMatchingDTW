@@ -32,7 +32,11 @@ def dp(dist_mat, penalty_matrix = np.array([1,1,1])):
                 cost_mat[i, j],      # match (0)
                 cost_mat[i, j + 1],  # insertion (1) * PENALTY
                 cost_mat[i + 1, j]]  # deletion (2) * PENALTY /////////////////
-            penalty*=penalty_matrix
+            
+            # for k in range(len(penalty)): # penalty *= penalty_matrix
+            #     if not (penalty[k] is None):
+            #         penalty[k] *= penalty_matrix[k]
+            penalty *= penalty_matrix
             i_penalty = np.argmin(penalty)
             cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
             traceback_mat[i, j] = i_penalty
@@ -91,7 +95,7 @@ def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray, penalty_matrix = np
         for j in range(M):
             dist_mat[i, j] = abs(arr1[i] - arr2[j])
             
-    path, cost_mat = dp(dist_mat, penalty_matrix)
+    path, cost_mat = dp(dist_mat, penalty_matrix=penalty_matrix)
 
     new_arr_x = [arrRef[tupla[1]] for tupla in path]
     new_arr_y = [arr1[tupla[0]] for tupla in path]

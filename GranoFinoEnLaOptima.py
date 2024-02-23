@@ -10,6 +10,38 @@ from DTW import DTW
 from IOU import IoU
 import pandas as pd
 
+def iteration_matrix_values(iteration:int, total:int):
+    # Declaracion de valores por defecto
+    pty_match = 1
+    pty_insert = 1
+    pty_deletion = 1
+    
+    # Ajuste de los valores segun el valor de iteracion actual
+    max_per_case = total / 6
+    
+    if (iteration < max_per_case):
+        pty_match = 1 + 0.5 * (iteration % max_per_case)
+        
+    elif (iteration < max_per_case*2):
+        pty_insert = 1 + 0.5 * (iteration % max_per_case)
+        
+    elif (iteration < max_per_case*3):
+        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+        
+    elif (iteration < max_per_case*4):
+        pty_match = 1 + 0.5 * (iteration % max_per_case)
+        pty_insert = 1 + 0.5 * (iteration % max_per_case)
+        
+    elif (iteration < max_per_case*5):
+        pty_match = 1 + 0.5 * (iteration % max_per_case)
+        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+        
+    elif (iteration < max_per_case*6):
+        pty_insert = 1 + 0.5 * (iteration % max_per_case)
+        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+    
+    return np.array([pty_match, pty_insert, pty_deletion])
+
 # Datos y headers del observado
 filename = "WCOMP01.fits"
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -74,31 +106,18 @@ metrics = {
     "NAC": [],
 }
 
+#cal_X, cal_Y, NorAlgCos = DTW(picos_y, teo_y, teo_x, np.array([2,1,1]))
+
 # Definicion de constantes
-ITERACIONES=5
-"""Hacer un iterador que aplique variaciones en pesos de penalizacion y borrado"""
+ITERACIONES=5*6
+
 for i in tqdm(range(ITERACIONES), desc=f'Porcentaje de avance'):
 
-    # Definicion de matriz de penalizado a usar en DTW
-    if (i < ITERACIONES):
-        pty_match = 0 + 0.5 * i
-        pty_insert = 1
-        pty_deletion = 1
-
-    elif (i < ITERACIONES*2):
-        pty_match = 1
-        pty_insert = 0 + 0.5 * i
-        pty_deletion = 1
-    
-    else: 
-        pty_match = 1
-        pty_insert = 0 + 0.5 * i
-        pty_deletion = 1
-    
-    penalty_matrix = np.array([pty_match, pty_insert, pty_deletion])
+    # Calculo de matriz de penalizado a usar
+    penalty_matrix = iteration_matrix_values(i, ITERACIONES)
 
     # Aplicación DTW del teorico respecto al recorte correcto del teorico
-    cal_X, cal_Y, NorAlgCos = DTW(picos_y, teo_y, teo_x)
+    cal_X, cal_Y, NorAlgCos = DTW(picos_y, teo_y, teo_x, penalty_matrix)
 
     # Determinación de la metrica IoU
     Iou = IoU(teo_x[0], teo_x[-1], obs_long_min, obs_long_max)
@@ -106,9 +125,9 @@ for i in tqdm(range(ITERACIONES), desc=f'Porcentaje de avance'):
     # Agrupación de los datos relevantes de la calibración en un objeto y agregado a la lista calibrations
     cal = Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos) 
 
-    metrics["Pty_Match"].append(pty_match)
-    metrics["Pty_Insert"].append(pty_insert)
-    metrics["Pty_Deletion"].append(pty_deletion)
+    metrics["Pty_Match"].append(penalty_matrix[0])
+    metrics["Pty_Insert"].append(penalty_matrix[1])
+    metrics["Pty_Deletion"].append(penalty_matrix[2])
     metrics["IoU"].append(cal.IoU)
     metrics["NAC"].append(cal.NaC)
 
@@ -127,6 +146,3 @@ print(f"Datos de metricas '{csv_name}' guardados exitosamente.")
 # plt.bar(cal.arr_X, cal.arr_Y, label='calibrado', color='orange')
 # plt.legend()
 # plt.show()
-
-
-
