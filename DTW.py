@@ -1,6 +1,6 @@
 import numpy as np
     
-def dp(dist_mat,penalty_matrix = np.array([1,1,1])):
+def dp(dist_mat, penalty_matrix = np.array([1,1,1])):
     """
     Find minimum-cost path through matrix `dist_mat` using dynamic programming.
 
@@ -57,7 +57,7 @@ def dp(dist_mat,penalty_matrix = np.array([1,1,1])):
     cost_mat = cost_mat[1:, 1:]
     return (path[::-1], cost_mat)
 
-def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray):
+def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray, penalty_matrix = np.array([1,1,1])):
     """Funcion que en base a los datos de 2 funciones y una refencia en eje X aplica DTW para
     obtener los datos X e Y de la funcion councidente
     
@@ -69,6 +69,8 @@ def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray):
         arrRef (numpy.ndarray): Arreglo de datos para usar como referencia para distribuir los
         resultados del analisis en el eje X (Usualmente se emplean los datos de arr2 
         correspondientes al eje X)
+        penalty_matrix (numpy.array): Arreglo de pesos a considerar para multiplicar las penalizaciones
+        de [coincidencia, insercion, borrado]
     
     Returns:
         np.ndarray: Arreglo resultante para el eje X
@@ -89,7 +91,7 @@ def DTW(arr1:np.ndarray, arr2:np.ndarray, arrRef:np.ndarray):
         for j in range(M):
             dist_mat[i, j] = abs(arr1[i] - arr2[j])
             
-    path, cost_mat = dp(dist_mat)
+    path, cost_mat = dp(dist_mat, penalty_matrix)
 
     new_arr_x = [arrRef[tupla[1]] for tupla in path]
     new_arr_y = [arr1[tupla[0]] for tupla in path]
