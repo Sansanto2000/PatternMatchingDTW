@@ -11,6 +11,18 @@ from IOU import IoU
 import pandas as pd
 
 def iteration_matrix_values(iteration:int, total:int):
+    """Funcion para recuperar matriz de penalizado a usar respecto una iteracion 
+    sobre un total
+
+    Args:
+        iteration (int): Numero de iteracion
+        total (int): Cantidad total de iteraciones
+
+    Returns:
+        numpy.array: Arreglo de 3 elementos correspodientes a [penalizacion de coincidencia, 
+        penalizacion de insertado, penalizacion de borrado]
+    """
+    
     # Declaracion de valores por defecto
     pty_match = 1
     pty_insert = 1
@@ -19,26 +31,29 @@ def iteration_matrix_values(iteration:int, total:int):
     # Ajuste de los valores segun el valor de iteracion actual
     max_per_case = total / 6
     
+    # Calculo de valor a remplazar para esta iteracion
+    value = 1 + 0.5 * (iteration % max_per_case)
+    
     if (iteration < max_per_case):
-        pty_match = 1 + 0.5 * (iteration % max_per_case)
+        pty_match = value
         
     elif (iteration < max_per_case*2):
-        pty_insert = 1 + 0.5 * (iteration % max_per_case)
+        pty_insert = value
         
     elif (iteration < max_per_case*3):
-        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+        pty_deletion = value
         
     elif (iteration < max_per_case*4):
-        pty_match = 1 + 0.5 * (iteration % max_per_case)
-        pty_insert = 1 + 0.5 * (iteration % max_per_case)
+        pty_match = value
+        pty_insert = value
         
     elif (iteration < max_per_case*5):
-        pty_match = 1 + 0.5 * (iteration % max_per_case)
-        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+        pty_match = value
+        pty_deletion = value
         
     elif (iteration < max_per_case*6):
-        pty_insert = 1 + 0.5 * (iteration % max_per_case)
-        pty_deletion = 1 + 0.5 * (iteration % max_per_case)
+        pty_insert = value
+        pty_deletion = value
     
     return np.array([pty_match, pty_insert, pty_deletion])
 
