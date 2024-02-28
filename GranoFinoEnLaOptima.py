@@ -63,7 +63,7 @@ def iteration_matrix_values(iteration:int, total:int):
     return np.array([pty_match, pty_insert, pty_deletion])
 
 # Constantes para flujo del algoritmo
-PICOS_EMPIRICO = True
+PICOS_EMPIRICO = False
 SUAVIZADO_TEORICO = False
 
 # Definicion de constante a usar durante el suavisado del teorico en caso de que corresponda
