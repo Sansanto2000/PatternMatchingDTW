@@ -9,10 +9,12 @@ De cada archivo almacenar:
 - IoU mejor ventana
 """
 import os
+import numpy as np
 from DTW import DTW
 from IOU import IoU
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from Calibration import Calibration
 from utils import getfileData, normalize_min_max, slice_with_range_step, gaussianice_arr, subconj_generator
@@ -57,10 +59,11 @@ FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"] # Archivos a calibrar
 HEIGHT = 0.025 # Altura minima a considerar para la busqueda de picos
-W_STEP = 300 # Cantidad de longitudes de onda entre cada inicio de ventana
-W_RANGE = 1800 # Rango de longitudes de onda que una ventana cubre
+W_STEP = 100 # Cantidad de longitudes de onda entre cada inicio de ventana
+W_RANGE = 1900 # Rango de longitudes de onda que una ventana cubre
 RESOLUTION = 300 # Resolucion con la que aplicar el suavizado del teorico 
 SIGMA = 50 # Sigma a usar para el suavizado del teorico
+SAVEPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DTWPorVentanasEmp(pic)") # Especificacion de carpeta para almacenar los graficos
 
 # Datos de teoricos del NIST
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -87,7 +90,7 @@ teo_y, _, _ = normalize_min_max(target=teo_y)
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, W_RANGE, W_STEP)
 
 # Gaussianizado y normalizado de los recortes del teorico
-slices_x_gau, slices_y_gau = gaussianice_arr(slices_x, slices_y, RESOLUTION, SIGMA, ranges, True)
+slices_x, slices_y = gaussianice_arr(slices_x, slices_y, RESOLUTION, SIGMA, ranges, normalize=False)
 
 # Declaración de diccionario donde se guardaran los datos a almacenar
 metrics = {
@@ -127,14 +130,14 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     picos_y = obs_y[picos_x]
     
     # Calibrado por ventanas y obtencion de resultados
-    calibrations = calibrate_for_windows(slices_x_gau, slices_y_gau, picos_y, obs_long_min, obs_long_max)
+    calibrations = calibrate_for_windows(slices_x, slices_y, picos_y, obs_long_min, obs_long_max)
     
     # Busqueda de la mejor calibración
     best_calibration = None
-    best_IoU = -float('inf')
+    best_NAC = float('inf')
     for i in range(len(calibrations)):
-        if (best_IoU < calibrations[i].IoU):
-            best_IoU = calibrations[i].IoU
+        if (best_NAC > calibrations[i].NaC):
+            best_NAC = calibrations[i].NaC
             best_calibration = calibrations[i]
     
     # Acomodado de los datos en el formato adecuado
@@ -148,6 +151,25 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     metrics["HEIGHT"].append(HEIGHT)
     metrics["IoU_mejor_ventana"].append(best_calibration.IoU)
     metrics["NAC_mejor_ventana"].append(best_calibration.NaC)
+
+    # # Conversion necesaria para el graficadoa
+    # obs_x = np.array(obs_x)
+    # picos_x = np.array(picos_x, dtype=int)
+    
+    # Ajusta el tamaño de la figura
+    plt.figure(figsize=(10, 6))
+    
+    # Graficar la señal y los picos
+    plt.bar(best_calibration.arr_X, best_calibration.arr_Y, label='Emp Calibrado', alpha=1, color='red', linewidth=2)
+    plt.bar([obs_long_min,obs_long_max], [1,1], label='Emp Real', alpha=1, color='green', linewidth=2)
+    #plt.plot(obs_x, obs_y, label='Empirico', alpha=1, color='black', linewidth=0.5, linestyle='--')
+
+    plt.legend()
+    save_location = os.path.join(SAVEPATH, f'{filename}_Graph.png')
+    plt.savefig(save_location)
+    plt.show()
+    plt.close()
+
     
 # Crear un DataFrame con los datos
 df = pd.DataFrame(metrics)
