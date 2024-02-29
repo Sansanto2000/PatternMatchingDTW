@@ -43,7 +43,7 @@ def calibrate_and_obtain_metrics(teo_x:list, teo_y:list, obs_x:list, obs_y:list,
         cal_X, cal_Y, NorAlgCos = DTW(obs_y, slice_y_gau, slice_x_gau)
         
         # Determinación de la metrica IoU
-        Iou = IoU(slice_x_gau[0], slice_x_gau[len(slice_x_gau)-1], obs_long_min, obs_long_max)
+        Iou = IoU(slice_x_gau[0], slice_x_gau[-1], obs_long_min, obs_long_max)
         
         # Agrupación de los datos relevantes de la calibración en un objeto y agregado a la lista calibrations
         Calibrations.append(Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos))
