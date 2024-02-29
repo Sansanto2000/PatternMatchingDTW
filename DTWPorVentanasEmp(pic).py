@@ -57,7 +57,7 @@ FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"] # Archivos a calibrar
 HEIGHT = 0.025 # Altura minima a considerar para la busqueda de picos
-W_STEP = 600 # Cantidad de longitudes de onda entre cada inicio de ventana
+W_STEP = 300 # Cantidad de longitudes de onda entre cada inicio de ventana
 W_RANGE = 1800 # Rango de longitudes de onda que una ventana cubre
 RESOLUTION = 300 # Resolucion con la que aplicar el suavizado del teorico 
 SIGMA = 50 # Sigma a usar para el suavizado del teorico
@@ -127,7 +127,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     picos_y = obs_y[picos_x]
     
     # Calibrado por ventanas y obtencion de resultados
-    calibrations = calibrate_for_windows(slices_x_gau, slices_y_gau, obs_y, obs_long_min, obs_long_max)
+    calibrations = calibrate_for_windows(slices_x_gau, slices_y_gau, picos_y, obs_long_min, obs_long_max)
     
     # Busqueda de la mejor calibración
     best_calibration = None
