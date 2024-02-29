@@ -75,6 +75,39 @@ def gaussianice(x:list, y:list, resolution:int, sigma:float, rang=None):
         y_au += (pdf * y[i])        
     return x_au, y_au
 
+def gaussianice_arr(xs:list, ys:list, resolution:int, sigma:float, ranges:list, normalize:bool=False): 
+    """Funcion que gaussianiza arreglos de conjuntos conjuntos X, Y de datos
+
+    Args:
+        x (list): Arreglo de arreglos con datos correspondientes al eje X
+        y (list): Arreglo de arreglos con datos correspondientes al eje Y
+        resolution (int): Cantidad de elementos que tiene que demostrar la funcion gaussianizada resultante
+        sigma (float): Sigma empleado
+        rang (list): Arreglo de rango de valores entre los que se quiere que se informe el 
+        gaussianizado.
+        normalize (bool): Condicion booleana para saber si se deben normalizar los datos gauccianizados. Por
+        defecto es False
+        
+
+    Returns:
+        numpy.ndarray: Arreglo de arreglos con datos gaussianizados para el eje X
+        numpy.ndarray: Arreglo de arreglos con datos gaussianizados para el eje Y
+    """
+    gaussianised_xs = []
+    gaussianised_ys = []
+    
+    for i in range(len(xs)):
+        
+        aux_xs, aux_ys = gaussianice(xs[i], ys[i], resolution, sigma, ranges[i])
+        
+        if(normalize):
+            aux_ys, _, _ = normalize_min_max(target=aux_ys)
+            
+        gaussianised_xs.append(aux_xs)
+        gaussianised_ys.append(aux_ys)
+        
+    return gaussianised_xs, gaussianised_ys
+
 def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
     """Divide en varios subarreglos los datos correspondientes al eje X y el eje Y de una funcion
 
