@@ -17,7 +17,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from Calibration import Calibration
-from utils import getfileData, normalize_min_max, slice_with_range_step, gaussianice_arr, subconj_generator
+from utils import getfileData, normalize_min_max, slice_with_range_step, gaussianice_arr, subconj_generator, calibrate_with_observations
 from NIST_Table_Interactor import NIST_Table_Interactor
 
 def calibrate_for_windows(teo_slices_x:list, teo_slices_y:list, obs_y:list, obs_long_min:int, 
@@ -117,6 +117,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     # Longitud de onda minima y maxima del observado calibrado
     obs_long_min = obs_headers['CRVAL1'] + 0*obs_headers['CD1_1']
     obs_long_max = obs_headers['CRVAL1'] + (len(obs_data)-1)*obs_headers['CD1_1']
+    obs_calib_real = calibrate_with_observations(obs_data, obs_headers['CRVAL1'], obs_headers['CD1_1'])
     
     # Separacion de datos observados para el eje X y el eje Y
     obs_x = range(len(obs_data))
@@ -160,8 +161,10 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     plt.figure(figsize=(10, 6))
     
     # Graficar la señal y los picos
+    print([obs_long_min,obs_long_max])
     plt.bar(best_calibration.arr_X, best_calibration.arr_Y, label='Emp Calibrado', alpha=1, color='red', linewidth=2)
-    plt.bar([obs_long_min,obs_long_max], [1,1], label='Emp Real', alpha=1, color='green', linewidth=2)
+    plt.plot(obs_calib_real, obs_y, label='Emp Real', alpha=1, color='black', linewidth=2)
+    # Falta la funcion
     #plt.plot(obs_x, obs_y, label='Empirico', alpha=1, color='black', linewidth=0.5, linestyle='--')
 
     plt.legend()
