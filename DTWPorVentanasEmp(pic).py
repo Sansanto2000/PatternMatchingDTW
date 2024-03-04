@@ -9,6 +9,7 @@ De cada archivo almacenar:
 - IoU mejor ventana
 """
 import os
+import mplcursors
 import numpy as np
 from DTW import DTW
 from IOU import IoU
@@ -160,17 +161,38 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     # Ajusta el tamaño de la figura
     plt.figure(figsize=(10, 6))
     
-    # Graficar la señal y los picos
-    print([obs_long_min,obs_long_max])
-    plt.bar(best_calibration.arr_X, best_calibration.arr_Y, label='Emp Calibrado', alpha=1, color='red', linewidth=2)
-    plt.plot(obs_calib_real, obs_y, label='Emp Real', alpha=1, color='black', linewidth=2)
-    # Falta la funcion
-    #plt.plot(obs_x, obs_y, label='Empirico', alpha=1, color='black', linewidth=0.5, linestyle='--')
-
+    # Grafica una seccion del teorico
+    min_teo_grap = best_calibration.arr_X[0] if best_calibration.arr_X[0] < obs_calib_real[0] else obs_calib_real[0]
+    min_teo_grap -= W_STEP
+    max_teo_grap = best_calibration.arr_X[-1] if best_calibration.arr_X[-1] > obs_calib_real[-1] else obs_calib_real[-1]
+    max_teo_grap += W_STEP
+    grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
+    # Iterar sobre los datos y dibujar barras
+    plt.bar([], [], width=0, label='Teorico', color='blue', align='edge', alpha=1)
+    for x, y in zip(grap_teo_x, grap_teo_y):
+        # Dibujar la barra desde 0 hasta el punto (x, y)
+        plt.bar([x], [y], width=8, align='edge', color='blue', alpha=0.7)
+    #plt.plot(grap_teo_x, grap_teo_y, label='Teorico', alpha=1, color='blue', linewidth=0.5, linestyle='--')
+    
+    # Grafica el calibrado
+    plt.bar([0], [0], width=0, label='Emp Optimo', color='red', align='edge', alpha=1)
+    for x, y in zip(best_calibration.arr_X, best_calibration.arr_Y):
+        # Dibujar la barra desde 0 hasta el punto (x, y)
+        plt.bar([x], [y], width=2, align='edge', color='red', alpha=0.7)
+    #plt.plot(best_calibration.arr_X, best_calibration.arr_Y, label='Emp Calibrado', alpha=1, color='red', linewidth=0.5, linestyle='--')
+    
+    # Grafica el empirico real
+    plt.bar([0], [0], width=0, label='Emp Real', color='black', align='edge', alpha=1)
+    for x, y in zip(obs_calib_real, obs_y):
+        # Dibujar la barra desde 0 hasta el punto (x, y)
+        plt.bar([x], [y], width=1, align='edge', color='black', alpha=0.7)
+    #plt.plot(obs_calib_real, obs_y, label='Emp Real', alpha=1, color='black', linewidth=0.5, linestyle='--')
+        
+    mplcursors.cursor(hover=True) # Activar mplcursors
     plt.legend()
     save_location = os.path.join(SAVEPATH, f'{filename}_Graph.png')
     plt.savefig(save_location)
-    plt.show()
+    #plt.show()
     plt.close()
 
     
