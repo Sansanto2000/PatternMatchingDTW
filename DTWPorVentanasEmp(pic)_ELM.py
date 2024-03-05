@@ -63,8 +63,8 @@ FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"] # Archivos a calibrar
 HEIGHT = 0.025 # Altura minima a considerar para la busqueda de picos
-W_STEP = 100 # Cantidad de longitudes de onda entre cada inicio de ventana
-W_RANGE = 1900 # Rango de longitudes de onda que una ventana cubre
+W_STEP = 50 # Cantidad de longitudes de onda entre cada inicio de ventana
+W_RANGE = 1800 # Rango de longitudes de onda que una ventana cubre
 RESOLUTION = 300 # Resolucion con la que aplicar el suavizado del teorico 
 SIGMA = 50 # Sigma a usar para el suavizado del teorico
 SAVEPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
@@ -197,6 +197,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     plt.savefig(save_location)
     #plt.show()
     plt.close()
+    break
     
 # Crear un DataFrame con los datos
 df = pd.DataFrame(metrics)

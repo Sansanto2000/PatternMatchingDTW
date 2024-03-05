@@ -87,6 +87,12 @@ teo_x, teo_y, _, _ = subconj_generator(teo_x, teo_y, 0, 25000)
 # Normalizado de los datos en el eje Y
 teo_y, _, _ = normalize_min_max(target=teo_y)
 
+threshold = 0.1
+teo_x = np.array(teo_x)
+teo_y = np.array(teo_y)
+teo_x = teo_x[teo_y>threshold]
+teo_y = teo_y[teo_y>threshold]
+
 # Recorte de los datos del teorico en conjuntos de ventanas
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, W_RANGE, W_STEP)
 
@@ -130,7 +136,14 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     # Busqueda de los picos empiricos
     picos_x, _ = find_peaks(obs_y, height=HEIGHT)
     picos_y = obs_y[picos_x]
-    
+
+    indices = picos_y>threshold
+    picos_x = picos_x[indices]
+    picos_y = picos_y[indices]
+
+    picos_calib_real = np.array(obs_calib_real)[picos_x]
+
+
     # Calibrado por ventanas y obtencion de resultados
     calibrations = calibrate_for_windows(slices_x, slices_y, picos_y, obs_long_min, obs_long_max)
     
@@ -159,7 +172,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     # picos_x = np.array(picos_x, dtype=int)
     
     # Ajusta el tamaño de la figura
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(20, 12), dpi=300)
     
     # Grafica una seccion del teorico
     min_teo_grap = best_calibration.arr_X[0] if best_calibration.arr_X[0] < obs_calib_real[0] else obs_calib_real[0]
@@ -183,17 +196,18 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     
     # Grafica el empirico real
     plt.bar([0], [0], width=0, label='Emp Real', color='black', align='edge', alpha=1)
-    for x, y in zip(obs_calib_real, obs_y):
+    for x, y in zip(picos_calib_real, picos_y):
         # Dibujar la barra desde 0 hasta el punto (x, y)
         plt.bar([x], [y], width=1, align='edge', color='black', alpha=0.7)
     #plt.plot(obs_calib_real, obs_y, label='Emp Real', alpha=1, color='black', linewidth=0.5, linestyle='--')
         
     mplcursors.cursor(hover=True) # Activar mplcursors
-    plt.legend()
+    #plt.legend()
     save_location = os.path.join(SAVEPATH, f'{filename}_Graph.png')
     plt.savefig(save_location)
-    #plt.show()
+    plt.show()
     plt.close()
+    break
 
     
 # Crear un DataFrame con los datos
