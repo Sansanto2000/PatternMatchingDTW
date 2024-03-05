@@ -10,7 +10,7 @@ De cada archivo almacenar:
 """
 import os
 import mplcursors
-from EM import ELM, ERM
+from EM import EAM, ERM
 from DTW import DTW
 from IOU import IoU
 import pandas as pd
@@ -46,12 +46,12 @@ def calibrate_for_windows(teo_slices_x:list, teo_slices_y:list, obs_y:list, obs_
         # Determinación de la metrica IoU
         Iou = IoU(teo_slices_x[i][0], teo_slices_x[i][-1], obs_long_min, obs_long_max)
         
-        ElM = ELM(obs_y, teo_slices_y[i])
+        EaM = EAM(obs_y, teo_slices_y[i])
         
         ErM = ERM(obs_y, teo_slices_y[i])
         
         # Agrupación de los datos relevantes de la calibración en un objeto y agregado a la lista calibrations
-        Calibrations.append(Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos, ElM=ElM, ErM=ErM))
+        Calibrations.append(Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos, EaM=EaM, ErM=ErM))
 
     return Calibrations
 
@@ -96,8 +96,8 @@ teo_y, _, _ = normalize_min_max(target=teo_y)
 # Recorte de los datos del teorico en conjuntos de ventanas
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, W_RANGE, W_STEP)
 
-# Gaussianizado y normalizado de los recortes del teorico
-slices_x, slices_y = gaussianice_arr(slices_x, slices_y, RESOLUTION, SIGMA, ranges, normalize=False)
+# # Gaussianizado y normalizado de los recortes del teorico
+# slices_x, slices_y = gaussianice_arr(slices_x, slices_y, RESOLUTION, SIGMA, ranges, normalize=False)
 
 # Declaración de diccionario donde se guardaran los datos a almacenar
 metrics = {
@@ -111,7 +111,7 @@ metrics = {
     "HEIGHT": [],
     "IoU_mejor_ventana": [],
     "NAC_mejor_ventana": [],
-    "ELM_mejor_ventana": [],
+    "EAM_mejor_ventana": [],
     "ERM_mejor_ventana": []
 }
 
@@ -139,8 +139,11 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     picos_x, _ = find_peaks(obs_y, height=HEIGHT)
     picos_y = obs_y[picos_x]
     
+    # Suavizado de las ventanas acorde a la cantidad de picos a emplear
+    slices_x_sua, slices_y_sua = gaussianice_arr(slices_x, slices_y, len(picos_y), SIGMA, ranges, normalize=False)
+    
     # Calibrado por ventanas y obtencion de resultados
-    calibrations = calibrate_for_windows(slices_x, slices_y, picos_y, obs_long_min, obs_long_max)
+    calibrations = calibrate_for_windows(slices_x_sua, slices_y_sua, picos_y, obs_long_min, obs_long_max)
     
     # Busqueda de la mejor calibración
     best_calibration = None
@@ -153,7 +156,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     # Acomodado de los datos en el formato adecuado
     metrics["ID"].append(filename)
     metrics["Cant_Picos_Detectados"].append(len(picos_x))
-    metrics["Cant_Ventanas_Probadas"].append(len(slices_x))
+    metrics["Cant_Ventanas_Probadas"].append(len(slices_x_sua))
     metrics["SIGMA"].append(SIGMA)
     metrics["W_STEP"].append(W_STEP)
     metrics["W_RANGE"].append(W_RANGE)
@@ -161,7 +164,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     metrics["HEIGHT"].append(HEIGHT)
     metrics["IoU_mejor_ventana"].append(best_calibration.IoU)
     metrics["NAC_mejor_ventana"].append(best_calibration.NaC)
-    metrics["ELM_mejor_ventana"].append(best_calibration.ElM)
+    metrics["EAM_mejor_ventana"].append(best_calibration.EaM)
     metrics["ERM_mejor_ventana"].append(best_calibration.ErM)
     
     # Ajusta el tamaño de figura para graficado
@@ -200,6 +203,10 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     plt.savefig(save_location)
     #plt.show()
     plt.close()
+    
+    # Corte temprano para etapas de prueba
+    if (filename=="WCOMP02.fits"):
+        break
     
 # Crear un DataFrame con los datos
 df = pd.DataFrame(metrics)

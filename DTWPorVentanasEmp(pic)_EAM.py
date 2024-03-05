@@ -95,9 +95,6 @@ teo_y, _, _ = normalize_min_max(target=teo_y)
 # Recorte de los datos del teorico en conjuntos de ventanas
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, W_RANGE, W_STEP)
 
-# Gaussianizado y normalizado de los recortes del teorico
-slices_x, slices_y = gaussianice_arr(slices_x, slices_y, RESOLUTION, SIGMA, ranges, normalize=False)
-
 # Declaración de diccionario donde se guardaran los datos a almacenar
 metrics = {
     "ID": [],
@@ -137,21 +134,24 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     picos_x, _ = find_peaks(obs_y, height=HEIGHT)
     picos_y = obs_y[picos_x]
     
+    # Suavizado de las ventanas acorde a la cantidad de picos a emplear
+    slices_x_sua, slices_y_sua = gaussianice_arr(slices_x, slices_y, len(picos_y), SIGMA, ranges, normalize=False)
+    
     # Calibrado por ventanas y obtencion de resultados
-    calibrations = calibrate_for_windows(slices_x, slices_y, picos_y, obs_long_min, obs_long_max)
+    calibrations = calibrate_for_windows(slices_x_sua, slices_y_sua, picos_y, obs_long_min, obs_long_max)
     
     # Busqueda de la mejor calibración
     best_calibration = None
-    best_ELM = float('inf')
+    best_EAM = float('inf')
     for i in range(len(calibrations)):
-        if (best_ELM > calibrations[i].ElM):
-            best_ELM = calibrations[i].ElM
+        if (best_EAM > calibrations[i].EaM):
+            best_EAM = calibrations[i].EaM
             best_calibration = calibrations[i]
     
     # Acomodado de los datos en el formato adecuado
     metrics["ID"].append(filename)
     metrics["Cant_Picos_Detectados"].append(len(picos_x))
-    metrics["Cant_Ventanas_Probadas"].append(len(slices_x))
+    metrics["Cant_Ventanas_Probadas"].append(len(slices_x_sua))
     metrics["SIGMA"].append(SIGMA)
     metrics["W_STEP"].append(W_STEP)
     metrics["W_RANGE"].append(W_RANGE)
@@ -197,6 +197,10 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     plt.savefig(save_location)
     #plt.show()
     plt.close()
+    
+    # Corte temprano para etapas de prueba
+    if (filename=="WCOMP02.fits"):
+        break
     
 # Crear un DataFrame con los datos
 df = pd.DataFrame(metrics)
