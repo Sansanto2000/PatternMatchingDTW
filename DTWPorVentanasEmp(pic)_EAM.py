@@ -11,7 +11,7 @@ De cada archivo almacenar:
 import os
 import mplcursors
 import numpy as np
-from EM import ELM
+from EM import EAM
 from DTW import DTW
 from IOU import IoU
 import pandas as pd
@@ -47,10 +47,10 @@ def calibrate_for_windows(teo_slices_x:list, teo_slices_y:list, obs_y:list, obs_
         # Determinación de la metrica IoU
         Iou = IoU(teo_slices_x[i][0], teo_slices_x[i][-1], obs_long_min, obs_long_max)
         
-        ElM = ELM(obs_y, teo_slices_y[i])
+        EaM = EAM(obs_y, teo_slices_y[i])
         
         # Agrupación de los datos relevantes de la calibración en un objeto y agregado a la lista calibrations
-        Calibrations.append(Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos, ElM=ElM))
+        Calibrations.append(Calibration(arr_X=cal_X, arr_Y=cal_Y, IoU=Iou, NaC=NorAlgCos, EaM=EaM))
 
     return Calibrations
 
@@ -63,13 +63,13 @@ FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"] # Archivos a calibrar
 HEIGHT = 0.025 # Altura minima a considerar para la busqueda de picos
-W_STEP = 50 # Cantidad de longitudes de onda entre cada inicio de ventana
-W_RANGE = 1800 # Rango de longitudes de onda que una ventana cubre
+W_STEP = 100 # Cantidad de longitudes de onda entre cada inicio de ventana
+W_RANGE = 1900 # Rango de longitudes de onda que una ventana cubre
 RESOLUTION = 300 # Resolucion con la que aplicar el suavizado del teorico 
 SIGMA = 50 # Sigma a usar para el suavizado del teorico
 SAVEPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                        "DTWPorVentanasEmp(pic)_ELM") # Especificacion de carpeta para almacenar los graficos
-CSV_NAME = "PruebaPorVentanasEmp(picos)_ELM.csv" # Nombre del archivo CSV
+                        "DTWPorVentanasEmp(pic)_EAM") # Especificacion de carpeta para almacenar los graficos
+CSV_NAME = "PruebaPorVentanasEmp(picos)_EAM.csv" # Nombre del archivo CSV
 
 # Datos de teoricos del NIST
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -110,7 +110,7 @@ metrics = {
     "HEIGHT": [],
     "IoU_mejor_ventana": [],
     "NAC_mejor_ventana": [],
-    "ELM_mejor_ventana": []
+    "EAM_mejor_ventana": []
 }
 
 for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
@@ -159,7 +159,7 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     metrics["HEIGHT"].append(HEIGHT)
     metrics["IoU_mejor_ventana"].append(best_calibration.IoU)
     metrics["NAC_mejor_ventana"].append(best_calibration.NaC)
-    metrics["ELM_mejor_ventana"].append(best_calibration.ElM)
+    metrics["EAM_mejor_ventana"].append(best_calibration.EaM)
     
     # Ajusta el tamaño de figura para graficado
     plt.figure(figsize=(10, 6))
@@ -197,7 +197,6 @@ for filename in tqdm(FILES, desc=f'Porcentaje de avance'):
     plt.savefig(save_location)
     #plt.show()
     plt.close()
-    break
     
 # Crear un DataFrame con los datos
 df = pd.DataFrame(metrics)

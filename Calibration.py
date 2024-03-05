@@ -2,7 +2,7 @@ class Calibration:
     """Clase que agrupa datos y metricas relevantes de una calibración
     """
     
-    def __init__(self, arr_X:list, arr_Y:list, IoU:float, NaC:float, ElM:float = None, ErM:float = None):
+    def __init__(self, arr_X:list, arr_Y:list, IoU:float, NaC:float, EaM:float = None, ErM:float = None):
         """Metodo de inicialización
 
         Args:
@@ -13,7 +13,7 @@ class Calibration:
             entre las series temporales, tambien sugiere que las dos secuencias están alineadas de manera óptima 
             y son más similares. Un valor lejano a 0 indica que las series temporales son distintas y que no se 
             alinean de forma optima
-            ElM (float): Metrica 'Error Lineal Medio'. Un ELM cercano a cero indica una mejor similitud entre las series 
+            EaM (float): Metrica 'Error Absoluto Medio'. Un EAM cercano a cero indica una mejor similitud entre las series 
             temporales, tambien sugiere que las dos secuencias están mejor alineadas. Un valor lejano a 0 indica 
             que las series temporales son distintas y que no se alinean de forma optima
             ErM (float): Metrica 'Error Racional Medio'. Un ERM cercano a cero indica una mejor similitud 
@@ -24,7 +24,7 @@ class Calibration:
         self.arr_Y:list = arr_Y
         self.IoU:float = IoU
         self.NaC:float = NaC
-        self.ElM:float = ElM
+        self.EaM:float = EaM
         self.ErM:float = ErM
     
     def __str__(self):

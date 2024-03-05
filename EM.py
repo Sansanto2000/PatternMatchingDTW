@@ -1,7 +1,7 @@
 import math
 import numpy as np
     
-def ELM(arr1:np.ndarray, arr2:np.ndarray) -> float:
+def EAM(arr1:np.ndarray, arr2:np.ndarray) -> float:
     """Funcion que en base a los datos de 2 funciones calcula el error lineal medio entre
     las 2 respecto al eje Y
     
@@ -10,22 +10,15 @@ def ELM(arr1:np.ndarray, arr2:np.ndarray) -> float:
         arr2 (numpy.ndarray): Arreglo de datos correspondientes a la 2da funcion a comparar (Eje Y)
     
     Returns:
-        float: Metrica 'Error Lineal Medio'. Un ELM cercano a cero indica una mejor similitud 
+        float: Metrica 'Error Absoluto Medio'. Un EAM cercano a cero indica una mejor similitud 
         entre las series temporales, tambien sugiere que las dos secuencias están mejor alineadas. Un 
         valor lejano a 0 indica que las series temporales son distintas y que no se alinean de forma optima
     """
     
-    # Variable para acumulaciona de diferencias
-    sum:float = 0
+    # Calculo de diferencias entre las pocisiones de los arreglos y promediado
+    EaM = np.mean(np.abs(arr1 - arr2))
     
-    # Recorrer los arreglos y acumulado de diferencias lineales
-    for y1, y2 in zip(arr1, arr2):
-        sum += abs(y1 - y2)
-    
-    # Obtencion de la diferencia promedio entre los valores
-    elm = sum / len(arr1)
-    
-    return elm
+    return EaM
 
 def ERM(arr1:np.ndarray, arr2:np.ndarray) -> float:
     """Funcion que en base a los datos de 2 funciones calcula el error racional medio entre
@@ -42,14 +35,7 @@ def ERM(arr1:np.ndarray, arr2:np.ndarray) -> float:
         valor lejano a 0 indica que las series temporales son distintas y que no se alinean de forma optima
     """
     
-    # Variable para acumulaciona de diferencias
-    sum:float = 0
+    # Calculo de diferencias racionalizadas entre las pocisiones de los arreglos y promediado
+    ErM = np.mean(np.sqrt(np.abs(arr1 - arr2)))
     
-    # Recorrer los arreglos y acumulado de diferencias racionalizadas
-    for y1, y2 in zip(arr1, arr2):
-        sum += math.sqrt(abs(y1 - y2))
-    
-    # Obtencion de la diferencia promedio entre los valores
-    erm = sum / len(arr1)
-    
-    return erm
+    return ErM
