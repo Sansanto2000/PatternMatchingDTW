@@ -19,7 +19,7 @@ def get_Data_FILE():
     obs_y = obs_data
     
     # Normalizado de los datos obserbados en el eje Y
-    #obs_y, _, _ = normalize_min_max(obs_y)
+    obs_y, _, _ = normalize_min_max(obs_y)
     
     return obs_x, obs_y
 
@@ -41,7 +41,7 @@ def get_Data_NIST():
     teo_y = np.array(teorico_df['Intensity'])
 
     # Suavisado
-    teo_x, teo_y = gaussianice(teo_x, teo_y, 2000, 100)
+    #teo_x, teo_y = gaussianice(teo_x, teo_y, 2000, 100)
     
     # Normalizado de los datos en el eje Y
     teo_y, _, _ = normalize_min_max(target=teo_y)
@@ -62,8 +62,6 @@ template = np.cos(idx)
 # Find the best match with the canonical recursion formula
 #alignment = dtw(obs_y, teo_y, keep_internals=True)
 
-print(len(teo_y))
-
 # Con ventanado
 alignment = dtw(obs_y, teo_y, keep_internals=True, step_pattern=asymmetric,
                 #window_type="sakoechiba",
@@ -71,6 +69,10 @@ alignment = dtw(obs_y, teo_y, keep_internals=True, step_pattern=asymmetric,
                 open_begin=True,
                 open_end=True
                 )
+
+# Obtener metrica de calidad de alineado
+print(alignment.distance)
+print(alignment.normalizedDistance)
 
 # Display the warping curve, i.e. the alignment curve
 alignment.plot(type="threeway")
