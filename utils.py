@@ -63,7 +63,7 @@ def gaussianice(x:list, y:list, resolution:int, sigma:float, rang=None):
         numpy.ndarray: Arreglos con datos gaussianizados para el eje X
         numpy.ndarray: Arreglos con datos gaussianizados para el eje Y
     """
-    if(rang):
+    if(rang != None):
         x_au = np.linspace(rang[0], rang[1], resolution)
     else:
         x_au = np.linspace(np.min(x), np.max(x), resolution)

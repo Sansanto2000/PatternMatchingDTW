@@ -5,7 +5,7 @@ import os
 from dtw import *
 import numpy as np
 from NIST_Table_Interactor import NIST_Table_Interactor
-from utils import getfileData, normalize_min_max
+from utils import getfileData, normalize_min_max, gaussianice
 
 def get_Data_FILE():
     # Datos y headers del observado
@@ -37,18 +37,20 @@ def get_Data_NIST():
     teorico_df = nisttr.get_dataframe(filter=filter)
 
     # Separacion de datos teoricos para el eje X y el eje Y
-    teo_x = teorico_df['Wavelength(Ams)'].tolist()
-    teo_y = teorico_df['Intensity'].tolist()
+    teo_x = np.array(teorico_df['Wavelength(Ams)'])
+    teo_y = np.array(teorico_df['Intensity'])
+
+    # Suavisado
+    teo_x, teo_y = gaussianice(teo_x, teo_y, 2000, 100)
     
     # Normalizado de los datos en el eje Y
-    #teo_y, _, _ = normalize_min_max(target=teo_y)
+    teo_y, _, _ = normalize_min_max(target=teo_y)
     
     return teo_x, teo_y
 
 # Datos de empirico para usar como query
 obs_x, obs_y = get_Data_FILE()
-
-print(type(obs_x))
+teo_x, teo_y = get_Data_NIST()
 
 ## A noisy sine wave as query
 idx = np.linspace(0,6.28,num=100)
@@ -57,15 +59,24 @@ query = np.sin(idx)
 ## A cosine is for template; sin and cos are offset by 25 samples
 template = np.cos(idx)
 
-## Find the best match with the canonical recursion formula
-#alignment = dtw(obs_y, template, keep_internals=True)
+# Find the best match with the canonical recursion formula
+#alignment = dtw(obs_y, teo_y, keep_internals=True)
 
-## Display the warping curve, i.e. the alignment curve
-#alignment.plot(type="threeway")
+print(len(teo_y))
 
-dtw(obs_y, template, keep_internals=True, 
-    step_pattern=rabinerJuangStepPattern(6, "c"))\
-    .plot(type="twoway",offset=-2)
+# Con ventanado
+alignment = dtw(obs_y, teo_y, keep_internals=True, step_pattern=asymmetric,
+                #window_type="sakoechiba",
+                # window_args={'window_size':200}
+                open_begin=True,
+                open_end=True
+                )
+
+# Display the warping curve, i.e. the alignment curve
+alignment.plot(type="threeway")
+
+# Correlacion
+alignment = alignment.plot(type="twoway",offset=-2)
 
 import matplotlib.pyplot as plt
 
