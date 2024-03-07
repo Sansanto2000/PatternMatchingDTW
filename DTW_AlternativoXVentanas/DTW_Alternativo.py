@@ -4,6 +4,7 @@ Testeo para probar una nueva forma de ejecutar DTW
 import os
 from dtw import *
 import numpy as np
+import matplotlib.pyplot as plt
 from NIST_Table_Interactor import NIST_Table_Interactor
 from utils import getfileData, normalize_min_max, gaussianice
 
@@ -79,7 +80,5 @@ alignment.plot(type="threeway")
 
 # Correlacion
 alignment = alignment.plot(type="twoway",offset=-2)
-
-import matplotlib.pyplot as plt
 
 plt.show()
