@@ -102,8 +102,59 @@ def get_Data_NIST(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:s
     
     return teo_x, teo_y
 
+def find_best_calibration(CONFIG:Config, obs_y:np.ndarray, slices_y:np.ndarray, graph:bool=True):
+    """Funcion para hallar la mejor calibracion de un conjunto de datos observados respecto a un conjunto
+    de posibles alternativas
 
-CONFIG = Config(w_step=25)
+    Args:
+        CONFIG (Config): Objeto con detalles de configuracion globales relacionados
+        obs_y (np.ndarray): Arreglo de datos a calibrar
+        slices_y (np.ndarray): Conjunto de arreglos entre los que se debe encontrar la mejor coincidencia
+        graph (bool, optional): Condicion Boleana para saber si se debe realizar el graficado de la mejor 
+        coincidencia o no. Defaults to True
+
+    Returns:
+        DTW: Objeto DTW con detalles de la mejor coincidencia encontrada entre la funcion a comparar y las 
+        posibles funciones objetivo
+    """
+    
+    # Plantillas para acumulado de resultados
+    alignments = np.array([])
+    IoUs = np.array([])
+        
+    for i in range(0, len(slices_y)):
+        
+        # Aplicación DTW del observado respecto al gaussianizado
+        alignment = dtw(obs_y, slices_y[i], keep_internals=True, step_pattern=asymmetric, open_begin=True, open_end=True)
+        
+        # Determinación de la metrica IoU
+        w_inicio = CONFIG.W_STEP*i
+        w_fin = w_inicio + CONFIG.W_RANGE
+        Iou = IoU(w_inicio, w_fin, obs_real_x[0], obs_real_x[-1])
+        
+        # Agrega datos a arreglo
+        alignments = np.append(alignments, alignment)
+        IoUs = np.append(IoUs, Iou)
+    
+    # Busca el alineado con mejor metrica de distancia
+    index = np.argmin([alig.distance for alig in alignments])
+    best_alignment = alignments[index]
+    print(f'Best_IoU = {IoUs[index]}')
+    
+    if(graph):
+        
+        # Display the warping curve, i.e. the alignment curve
+        best_alignment.plot(type="threeway")
+
+        # Correlacion
+        best_alignment.plot(type="twoway",offset=-2)
+
+        plt.show()
+    
+    return best_alignment
+
+
+CONFIG = Config(w_step=50)
 
 # Directorio actual
 act_dir = os.path.dirname(os.path.abspath(__file__))
@@ -118,7 +169,7 @@ teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir))
 # Ventanado
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, CONFIG.W_RANGE, CONFIG.W_STEP)
     
-#Filtrar aquellos arreglos que tienen al menos un elemento
+#Filtrar aquellos arreglos que no tienen elementos
 au_x = []
 au_y = []
 for i in range(len(slices_x)):
@@ -128,36 +179,5 @@ for i in range(len(slices_x)):
 slices_x = np.array(au_x, dtype=object)
 slices_y = np.array(au_y, dtype=object)
 
-# Plantillas para acumulado de resultados
-alignments = np.array([])
-IoUs = np.array([])
-
-for i in range(0, len(slices_x)):
-        
-    # Aplicación DTW del observado respecto al gaussianizado
-    alignment = dtw(obs_y, slices_y[i], keep_internals=True, step_pattern=asymmetric, open_begin=True, open_end=True)
-    #print(alignment.distance)
-    
-    # Determinación de la metrica IoU
-    w_inicio = CONFIG.W_STEP*i
-    w_fin = w_inicio + CONFIG.W_RANGE
-    Iou = IoU(w_inicio, w_fin, obs_real_x[0], obs_real_x[-1])
-    
-    # Agrega datos a arreglo
-    alignments = np.append(alignments, alignment)
-    IoUs = np.append(IoUs, Iou)
-
-# Busca el alineado con mejor metrica de distancia
-index = np.argmin([alig.distance for alig in alignments])
-best_alignment = alignments[index]
-
-# Informa el IoU del mencionado alineamiento
-print(IoUs[index])
-
-# Display the warping curve, i.e. the alignment curve
-best_alignment.plot(type="threeway")
-
-# Correlacion
-best_alignment.plot(type="twoway",offset=-2)
-
-plt.show()
+# --------PROCESADO DE ARCHIVO-----------
+find_best_calibration(CONFIG, obs_y, slices_y, True)
