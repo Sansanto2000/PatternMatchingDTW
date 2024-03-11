@@ -155,7 +155,14 @@ act_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Variables de configuracion
 findDir = os.path.join(os.path.dirname(act_dir), 'WCOMPs')
-CONFIG = Config(finddir=findDir, w_step=50)
+files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP05.fits",
+         "WCOMP06.fits", "WCOMP07.fits", "WCOMP08.fits", "WCOMP09.fits", "WCOMP10.fits",
+         "WCOMP11.fits", "WCOMP12.fits", "WCOMP13.fits", "WCOMP14.fits", "WCOMP15.fits",
+         "WCOMP16.fits", "WCOMP17.fits", "WCOMP18.fits", "WCOMP19.fits", "WCOMP20_A.fits",
+         "WCOMP20_A.fits", "WCOMP21.fits", "WCOMP22.fits", "WCOMP23.fits", "WCOMP24.fits", 
+         "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
+         "WCOMP30.fits", "WCOMP31.fits"]
+CONFIG = Config(files=files, finddir=findDir, w_step=25)
 
 # Preparar CSV para persistencia de los datos
 df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE', 
@@ -187,7 +194,7 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
     obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 
     # Busqueda de la mejor calibracion
-    best_alignment, index, IoU = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
+    best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
 
     # Dispocición en vector de las longitudes de ondas calibradas para obs
     calibrado_x = np.full(len(best_alignment.index1), None)
@@ -237,7 +244,7 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
         'W_STEP': CONFIG.W_STEP,
         'W_RANGE': CONFIG.W_RANGE,
         'Distance_mejor_ventana': best_alignment.distance,
-        'IoU_mejor_ventana': IoU
+        'IoU_mejor_ventana': Iou
         }
     df = df._append(nueva_fila, ignore_index=True)
     # df = pd.concat([df, pd.DataFrame(list(nueva_fila))], ignore_index=True)
