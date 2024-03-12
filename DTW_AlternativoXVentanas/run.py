@@ -6,21 +6,29 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from IOU import IoU
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 from NIST_Table_Interactor import NIST_Table_Interactor
 from utils import getfileData, normalize_min_max, slice_with_range_step, subconj_generator
 
 class Config:
     
     def __init__(self, finddir:str = os.path.dirname(os.path.abspath(__file__)), files:list=['WCOMP01.fits'], 
-                 treshold:float=0.0, w_step:int=100, w_range:int=1900, 
-                 savepath:str=os.path.dirname(os.path.abspath(__file__)), csv_name:str="DTW_AlternativoXVentanas.csv" ):
+                 treshold_emp:float=0.0, treshold_teo:float=0.0, w_step:int=100, w_range:int=1900, 
+                 picos_empirico:bool = False, picos_teorico:bool = False, 
+                 savepath:str=os.path.dirname(os.path.abspath(__file__)), 
+                 csv_name:str="DTW_AlternativoXVentanas.csv" ):
         """Funcion de inicializacion de la clase Config
 
         Args:
             finddir (str, optional): Especificación de carpeta donde buscar los archivos. Defaults to 
             os.path.dirname(os.path.abspath(__file__)).
             files (list, optional): Arreglo con los nombres de los archivos a calibrar. Defaults to ['WCOMP01.fits'].
-            treshold (float, optional): Altura minima para la busqueda de picos. Defaults to 0.0.
+            treshold_emp (float, optional): Altura minima para la busqueda de picos en el empirico. Defaults to 0.0.
+            treshold_teo (float, optional): Altura minima para la busqueda de picos en el teorico. Defaults to 0.0.
+            picos_empirico (bool, optional): Condicion boleana par saber si se recortara el empirico segun los picos
+            disponibles o no. Defaults to False.
+            picos_teorico (bool, optional): Condicion boleana par saber si se recortara el empirico segun los picos
+            disponibles o no. Defaults to False.
             w_step (int, optional): Cantidad de longitudes de onda entre inicios de ventanas. Defaults to 100.
             w_range (int, optional): Rango de longitudes de onda que una ventana cubre. Defaults to 1900.
             savepath (str, optional): Especificación de carpeta para almacenar los graficos. Defaults to 
@@ -29,9 +37,12 @@ class Config:
         """
         self.FINDDIR = finddir
         self.FILES = files
-        self.TRESHOLD = treshold
+        self.TRESHOLD_EMP = treshold_emp
+        self.TRESHOLD_TEO = treshold_teo
         self.W_STEP = w_step
         self.W_RANGE = w_range
+        self.PICO_EMPIRICO = picos_empirico
+        self.PICO_TEORICO = picos_teorico
         self.SAVEPATH = savepath
         self.CSV_NAME = csv_name
     
@@ -137,7 +148,10 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         # Determinación de la metrica IoU
         w_inicio = w_step*i
         w_fin = w_inicio + w_range
-        Iou = IoU(w_inicio, w_fin, obs_real_x[0], obs_real_x[-1])
+        # Iou = IoU(w_inicio, w_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor ventana
+        c_inicio = slices_x[i][alignment.index2[0]]
+        c_fin = slices_x[i][alignment.index2[-1]]
+        Iou = IoU(w_inicio, w_fin, c_inicio, c_fin) # Segun mejor calibrado
         
         # Agrega datos a arreglo
         alignments = np.append(alignments, alignment)
@@ -162,7 +176,13 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP20_A.fits", "WCOMP21.fits", "WCOMP22.fits", "WCOMP23.fits", "WCOMP24.fits", 
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"]
-CONFIG = Config(files=files, finddir=findDir, w_step=25)
+CONFIG = Config(files=files, 
+                finddir=findDir,
+                w_step=25, 
+                picos_empirico=True, 
+                picos_teorico=True, 
+                treshold_emp=0.025,
+                treshold_teo=0.025)
 
 # Preparar CSV para persistencia de los datos
 df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE', 
@@ -172,6 +192,12 @@ df.to_csv(csv_path, index=False)
 
 # Obtencion de Teorico
 teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir))
+
+# Aislado de picos del Teorico. Solo si corresponde
+if (CONFIG.PICO_TEORICO):
+    indices, _ = find_peaks(teo_y, height=CONFIG.TRESHOLD_TEO)
+    teo_x = teo_x[indices]
+    teo_y = teo_y[indices]
 
 # Ventanado del Teorico
 ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, CONFIG.W_RANGE, CONFIG.W_STEP)
@@ -192,6 +218,13 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
     # Obtencion de empirico
     obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=CONFIG.FINDDIR, name = file)
     obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
+    
+    # Aislado de picos del Empirico. Solo si corresponde
+    if (CONFIG.PICO_EMPIRICO):
+        indices, _ = find_peaks(obs_y, height=CONFIG.TRESHOLD_EMP)
+        obs_x = obs_x[indices]
+        obs_y = obs_y[indices]
+        obs_real_x = obs_real_x[indices]
 
     # Busqueda de la mejor calibracion
     best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
