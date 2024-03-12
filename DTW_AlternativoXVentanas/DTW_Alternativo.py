@@ -5,12 +5,14 @@ import os
 from dtw import *
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from NIST_Table_Interactor import NIST_Table_Interactor
 from utils import getfileData, normalize_min_max, gaussianice
 
 def get_Data_FILE():
     # Datos y headers del observado
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     filepath = os.path.join(script_dir, "WCOMPs")
     filepath = os.path.join(filepath, 'WCOMP01.fits')
     obs_data, obs_headers = getfileData(filepath=filepath)
@@ -27,7 +29,7 @@ def get_Data_FILE():
 
 def get_Data_NIST():
     # Datos de teoricos del NIST
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     csv_filename = os.path.join(script_dir, "Tabla(NIST)_Int_Long_Mat_Ref.csv")
     nisttr = NIST_Table_Interactor(csv_filename=csv_filename)
     
@@ -53,6 +55,29 @@ def get_Data_NIST():
 obs_x, obs_y = get_Data_FILE()
 teo_x, teo_y = get_Data_NIST()
 
+# Graficado del Teorico
+plt.figure(figsize=(10, 6)) # Ajuste de tamaño de la figura
+plt.bar([], [], width=0, label='Teorico', color='blue', align='edge', alpha=1) 
+for x, y in zip(teo_x, teo_y):
+    plt.bar([x], [y], width=10, align='edge', color='blue', alpha=1)
+plt.savefig(f"TEO.png")
+plt.close()
+
+# Aislado de picos del Teorico
+TRESHOLD = 0.1
+if (True):
+    indices, _ = find_peaks(teo_y, height=TRESHOLD)
+    teo_x = teo_x[indices]
+    teo_y = teo_y[indices]
+
+# Graficado del Teorico
+plt.figure(figsize=(10, 6)) # Ajuste de tamaño de la figura
+plt.bar([], [], width=0, label='Teorico', color='blue', align='edge', alpha=1) 
+for x, y in zip(teo_x, teo_y):
+    plt.bar([x], [y], width=10, align='edge', color='blue', alpha=1)
+plt.savefig(f"TEO_Treshold={TRESHOLD}.png")
+plt.close()
+
 ## A noisy sine wave as query
 idx = np.linspace(0,6.28,num=100)
 query = np.sin(idx) 
@@ -75,10 +100,10 @@ alignment = dtw(obs_y, teo_y, keep_internals=True, step_pattern=asymmetric,
 print(alignment.distance)
 print(alignment.normalizedDistance)
 
-# Display the warping curve, i.e. the alignment curve
-alignment.plot(type="threeway")
+# # Display the warping curve, i.e. the alignment curve
+# alignment.plot(type="threeway")
 
-# Correlacion
-alignment = alignment.plot(type="twoway",offset=-2)
+# # Correlacion
+# alignment = alignment.plot(type="twoway",offset=-2)
 
-plt.show()
+# plt.show()
