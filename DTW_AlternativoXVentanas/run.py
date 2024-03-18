@@ -88,7 +88,8 @@ def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:s
     return obs_x, obs_y, obs_headers
 
 def get_Data_NIST(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='Tabla(NIST)_Int_Long_Mat_Ref.csv', 
-                  filter:list=["He I", "Ar I", "Ar II"], normalize:bool=True):
+                  filter:list=["He I", "Ar I", "Ar II"]
+                  , normalize:bool=True):
     """Funcion para obtener los datos teoricos a analizar
 
     Args:
@@ -151,7 +152,7 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         # Iou = IoU(w_inicio, w_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor ventana
         c_inicio = slices_x[i][alignment.index2[0]]
         c_fin = slices_x[i][alignment.index2[-1]]
-        Iou = IoU(w_inicio, w_fin, c_inicio, c_fin) # Segun mejor calibrado
+        Iou = IoU(c_inicio, c_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor calibrado
         
         # Agrega datos a arreglo
         alignments = np.append(alignments, alignment)
@@ -179,8 +180,8 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
 CONFIG = Config(files=files, 
                 finddir=findDir,
                 w_step=25, 
-                picos_empirico=True, 
-                picos_teorico=True, 
+                picos_empirico=False, 
+                picos_teorico=False, 
                 treshold_emp=0.025,
                 treshold_teo=0.025)
 
@@ -191,7 +192,8 @@ csv_path = os.path.join(CONFIG.SAVEPATH, CONFIG.CSV_NAME)
 df.to_csv(csv_path, index=False)
 
 # Obtencion de Teorico
-teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir))
+filter:list=["He I", "Ar I", "Ar II"]
+teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), filter=filter)
 
 # Aislado de picos del Teorico. Solo si corresponde
 if (CONFIG.PICO_TEORICO):
