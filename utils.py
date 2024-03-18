@@ -6,6 +6,34 @@ from scipy.signal import savgol_filter
 import numpy as np
 from scipy.stats import norm
 
+def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
+    """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
+
+    Args:
+        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to 
+        os.path.dirname(os.path.abspath(__file__)).
+        name (str, optional): Nombre del archivo. Defaults to 'WCOMP01.fits'.
+        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+
+    Returns:
+        numpy.ndarray: Datos de la lampara correspondientes al eje X
+        numpy.ndarray: Datos de la lampara correspondientes al eje Y
+        list: Headers adjuntos al archivo
+    """
+    # Datos y headers del observado
+    filepath = os.path.join(dirpath, name)
+    obs_data, obs_headers = getfileData(filepath=filepath)
+    
+    # Separacion de datos observados para el eje X y el eje Y
+    obs_x = np.array(range(len(obs_data)))
+    obs_y = obs_data
+    
+    # Normalizado de los datos obserbados en el eje Y
+    if (normalize):
+        obs_y, _, _ = normalize_min_max(obs_y)
+    
+    return obs_x, obs_y, obs_headers
+
 def getfileData(filepath:str): 
     """Funcion para obtener los datos de un archivo
 
