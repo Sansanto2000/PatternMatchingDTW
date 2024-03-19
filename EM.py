@@ -2,12 +2,12 @@ import math
 import numpy as np
     
 def EAM(arr1:np.ndarray, arr2:np.ndarray) -> float:
-    """Funcion que en base a los datos de 2 funciones calcula el error lineal medio entre
-    las 2 respecto al eje Y
+    """Funcion que en base a los datos de 2 arreglos calcula el error lineal medio entre
+    las 2
     
     Args:
-        arr1 (numpy.ndarray): Arreglo de datos correspondientes a la 1ra funcion a comparar (Eje Y)
-        arr2 (numpy.ndarray): Arreglo de datos correspondientes a la 2da funcion a comparar (Eje Y)
+        arr1 (numpy.ndarray): Arreglo de datos correspondientes a la 1ra funcion a comparar
+        arr2 (numpy.ndarray): Arreglo de datos correspondientes a la 2da funcion a comparar
     
     Returns:
         float: Metrica 'Error Absoluto Medio'. Un EAM cercano a cero indica una mejor similitud 
