@@ -3,12 +3,13 @@ from dtw import *
 import numpy as np
 import pandas as pd
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+from EM import EAM
 from IOU import IoU
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from NIST_Table_Interactor import NIST_Table_Interactor
-from utils import getfileData, normalize_min_max, slice_with_range_step, subconj_generator
+from utils import getfileData, normalize_min_max, slice_with_range_step, subconj_generator, get_Data_LIBS
 
 class Config:
     
@@ -187,13 +188,14 @@ CONFIG = Config(files=files,
 
 # Preparar CSV para persistencia de los datos
 df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE', 
-                                 'Distance_mejor_ventana', 'IoU_mejor_ventana'])
+                                 'Distance_mejor_ventana', 'IoU_mejor_ventana', 'Error_de_desplazamiento'])
 csv_path = os.path.join(CONFIG.SAVEPATH, CONFIG.CSV_NAME)
 df.to_csv(csv_path, index=False)
 
 # Obtencion de Teorico
 filter:list=["He I", "Ar I", "Ar II"]
-teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), filter=filter)
+#teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), filter=filter)
+teo_x, teo_y = get_Data_LIBS(dirpath=os.path.dirname(act_dir))
 
 # Aislado de picos del Teorico. Solo si corresponde
 if (CONFIG.PICO_TEORICO):
@@ -248,7 +250,7 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
 
     # grafico del espectro calibrado en contraste con su lampara de compaonracion
 
-    plt.figure(figsize=(10, 6)) # Ajuste de tamaño de la figura
+    plt.figure(figsize=(10, 6), dpi=600) # Ajuste de tamaño de la figura
 
     min_teo_grap = calibrado_x[0] if calibrado_x[0] < obs_real_x[0] else obs_real_x[0] # Seccion del teorico
     min_teo_grap -= CONFIG.W_STEP
@@ -257,11 +259,11 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
     grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
     plt.bar([], [], width=0, label='Teorico', color='blue', align='edge', alpha=1) 
     for x, y in zip(grap_teo_x, grap_teo_y):
-        plt.bar([x], [y], width=10, align='edge', color='blue', alpha=0.7)
+        plt.bar([x], [-y], width=10, align='edge', color='blue', alpha=0.7)
 
     plt.bar([0], [0], width=0, label='Emp Real', color='black', align='edge', alpha=1) # Real
     for x, y in zip(obs_real_x, obs_y):
-        plt.bar([x], [y], width=2, align='edge', color='black', alpha=0.7)
+        plt.bar([x], [-y], width=2, align='edge', color='black', alpha=0.7)
     
     plt.bar([0], [0], width=0, label='Emp Optimo', color='red', align='edge', alpha=1) # Optimo
     for x, y in zip(calibrado_x, obs_y):
@@ -279,7 +281,8 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
         'W_STEP': CONFIG.W_STEP,
         'W_RANGE': CONFIG.W_RANGE,
         'Distance_mejor_ventana': best_alignment.distance,
-        'IoU_mejor_ventana': Iou
+        'IoU_mejor_ventana': Iou,
+        'Error_de_desplazamiento': EAM(calibrado_x, obs_real_x)
         }
     df = df._append(nueva_fila, ignore_index=True)
     # df = pd.concat([df, pd.DataFrame(list(nueva_fila))], ignore_index=True)

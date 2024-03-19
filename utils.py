@@ -6,6 +6,36 @@ from scipy.signal import savgol_filter
 import numpy as np
 from scipy.stats import norm
 from NIST_Table_Interactor import NIST_Table_Interactor
+import pandas as pd
+
+def get_Data_LIBS(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='LIBS_He_Ar_Ne_Resolution=1000.csv', 
+                  normalize:bool=True):
+    """Funcion para obtener los datos teoricos a analizar
+
+    Args:
+        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to os.path.dirname(os.path.abspath(__file__)).
+        name (str, optional): Nombre del archivo. Defaults to 'Tabla(NIST)_Int_Long_Mat_Ref.csv'.
+        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+
+    Returns:
+        numpy.ndarray: Datos del teorico correspondientes al eje X
+        numpy.ndarray: Datos del teorico correspondientes al eje Y
+    """
+    
+    # Obtencion del dataframe
+    filepath = os.path.join(dirpath, name)
+    libs_df = pd.read_csv(filepath)
+
+    # Separacion de datos teoricos para el eje X y el eje Y
+    teo_x = np.array(libs_df['Wavelength (Å)'])
+    libs_df['Sum'] = libs_df['Sum'].str.replace(',', '.')
+    teo_y = np.array(pd.to_numeric(libs_df['Sum'], errors='coerce'))
+    
+    # Normalizado de los datos en el eje Y
+    if (normalize):
+        teo_y, _, _ = normalize_min_max(target=teo_y)
+    
+    return teo_x, teo_y
 
 def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
     """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
