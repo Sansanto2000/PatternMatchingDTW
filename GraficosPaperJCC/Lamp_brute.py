@@ -16,7 +16,7 @@ obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=FINDDIR, name=FILENAME, normal
 obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 
 # grafico de lamapara empirica en bruto (sin calibrar)
-plt.figure(figsize=(12, 4), dpi=1200)
+plt.figure(figsize=(12, 4), dpi=800)
 
 plt.bar([0], [0], width=0, label='Lampara Observada', color='black', align='edge', alpha=1) # Lamp Bruto
 for x, y in zip(obs_x, obs_y):
