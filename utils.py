@@ -5,6 +5,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal import savgol_filter
 import numpy as np
 from scipy.stats import norm
+from NIST_Table_Interactor import NIST_Table_Interactor
 
 def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
     """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
@@ -34,6 +35,39 @@ def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:s
     
     return obs_x, obs_y, obs_headers
 
+def get_Data_NIST(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='Tabla(NIST)_Int_Long_Mat_Ref.csv', 
+                  filter:list=["He I", "Ar I", "Ar II"]
+                  , normalize:bool=True):
+    """Funcion para obtener los datos teoricos a analizar
+
+    Args:
+        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to os.path.dirname(os.path.abspath(__file__)).
+        name (str, optional): Nombre del archivo. Defaults to 'Tabla(NIST)_Int_Long_Mat_Ref.csv'.
+        filter (list, optional): Elementos quimicos de los que se quieren los picos. Defaults to ["He I", "Ar I", "Ar II"].
+        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+
+    Returns:
+        numpy.ndarray: Datos del teorico correspondientes al eje X
+        numpy.ndarray: Datos del teorico correspondientes al eje Y
+    """
+    
+    # Datos de teoricos del NIST
+    filepath = os.path.join(dirpath, name)
+    nisttr = NIST_Table_Interactor(csv_filename=filepath)
+
+    # Obtencion del dataframe
+    teorico_df = nisttr.get_dataframe(filter=filter)
+
+    # Separacion de datos teoricos para el eje X y el eje Y
+    teo_x = np.array(teorico_df['Wavelength(Ams)'])
+    teo_y = np.array(teorico_df['Intensity'])
+    
+    # Normalizado de los datos en el eje Y
+    if (normalize):
+        teo_y, _, _ = normalize_min_max(target=teo_y)
+    
+    return teo_x, teo_y
+
 def getfileData(filepath:str): 
     """Funcion para obtener los datos de un archivo
 
@@ -52,18 +86,18 @@ def getfileData(filepath:str):
         data = hdul[0].data
     return data, headers
 
-def normalize_min_max(target, min:int=None, max:int=None):
+def normalize_min_max(target, min:float=None, max:float=None):
     """Dada un arreglo de datos objetivo se normalizan sus valores entre cero y uno
 
     Args:
         target (numpy.ndarray): Arreglo de datos a normalizar
-        min (int, optional): Valor minimo a considerar como referencia para valor 0 post normalizado. Defaults to None.
-        max (int, optional): Valor maximo a considerar como referencia para valor 1 post normalizado. Defaults to None.
+        min (float, optional): Valor minimo a considerar como referencia para valor 0 post normalizado. Defaults to None.
+        max (float, optional): Valor maximo a considerar como referencia para valor 1 post normalizado. Defaults to None.
 
     Returns:
         numpy.ndarray: Arreglo de datos normalizados entre 0 y 1
-        int, optional: valor minimo empleado para la normalización
-        int, optional: valor maximo empleado para la normalización
+        float, optional: valor minimo empleado para la normalización
+        float, optional: valor maximo empleado para la normalización
     """
     if(not min):
         min = np.min(target)
@@ -195,20 +229,20 @@ def calibrate_with_observations(obs_data:np.ndarray, crval1:float, crpix1:float)
         
     return wav_arr
 
-def subconj_generator(conj_x:list, conj_y:list, value_min:int, value_max:int):
+def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value_max:int):
     """Funcion que en base un subconjunto de datos correspondientes a una funcion genera
     un subconjunto de los mismos teniendo en cuenta determinados valores max y min que 
     puede tomar el eje X del subconjunto
 
     Args:
-        conj_x (list): Arreglo de datos del eje X
-        conj_y (list): arreglo de datos del eje Y
+        conj_x (numpy.ndarray): Arreglo de datos del eje X
+        conj_y (numpy.ndarray): arreglo de datos del eje Y
         value_min (int): Valor minimo que puede tener el subconjunto en el eje X
         value_max (int): Valor maximo que puede tener el subconjunto en el eje X
 
     Returns:
-        list: Arreglo de datos del subconjunto para el eje X
-        list: Arreglo de datos del subconjunto para el eje Y
+        numpy.ndarray: Arreglo de datos del subconjunto para el eje X
+        numpy.ndarray: Arreglo de datos del subconjunto para el eje Y
         int: Valor minimo real que tiene el subconjunto en el eje X
         int: Valor maximo real que tiene el subconjunto en el eje X
     """
@@ -226,7 +260,7 @@ def subconj_generator(conj_x:list, conj_y:list, value_min:int, value_max:int):
     sub_min = conj_x[0]
     sub_max = conj_x[-1]
     
-    return sub_x, sub_y, sub_min, sub_max
+    return np.array(sub_x), np.array(sub_y), sub_min, sub_max
     
 
 class Processor:
