@@ -9,7 +9,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from NIST_Table_Interactor import NIST_Table_Interactor
-from utils import getfileData, normalize_min_max, slice_with_range_step, subconj_generator, get_Data_LIBS
+from utils import getfileData, normalize_min_max, slice_with_range_step, subconj_generator, get_Data_LIBS, get_Data_FILE, get_Data_NIST
 
 class Config:
     
@@ -17,7 +17,8 @@ class Config:
                  treshold_emp:float=0.0, treshold_teo:float=0.0, w_step:int=100, w_range:int=1900, 
                  picos_empirico:bool = False, picos_teorico:bool = False, 
                  savepath:str=os.path.dirname(os.path.abspath(__file__)), 
-                 csv_name:str="DTW_AlternativoXVentanas.csv" ):
+                 csv_name:str="DTW_AlternativoXVentanas.csv", use_nist_data:bool=True,
+                 normalize_window:bool=False, teo_name:str="Tabla(NIST)_Int_Long_Mat_Ref.csv"):
         """Funcion de inicializacion de la clase Config
 
         Args:
@@ -35,6 +36,11 @@ class Config:
             savepath (str, optional): Especificación de carpeta para almacenar los graficos. Defaults to 
             os.path.dirname(os.path.abspath(__file__)).
             csv_name (str, optional): Nombre del archivo CSV. Defaults to "DTW_AlternativoXVentanas.csv".
+            use_nist_data (bool, optional): Condicion boleana par saber si se usaran los datos del NIST o de otra 
+            fuente alternativa.
+            normalize_window (bool, optional): Condicion boleana par saber si se normalizaran las ventanas teoricas 
+            posterior a su segmentado.
+            teo_name (str, optional): Nombre del archivo de donde se extraeran los datos teoricos.
         """
         self.FINDDIR = finddir
         self.FILES = files
@@ -46,6 +52,9 @@ class Config:
         self.PICO_TEORICO = picos_teorico
         self.SAVEPATH = savepath
         self.CSV_NAME = csv_name
+        self.USE_NIST_DATA = use_nist_data
+        self.NORMALIZE_WINDOW = normalize_window
+        self.TEO_NAME = teo_name
     
     def __str__(self) -> str:
         """Metodo de especificacion de cadena (str) representativa de instancia de la clase
@@ -59,67 +68,6 @@ class Config:
             W_RANGE={self.W_RANGE}, \
             W_SAVEPATH={self.W_SAVEPATH}, \
             W_CSV_NAME={self.W_CSV_NAME}]"
-
-def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
-    """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
-
-    Args:
-        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to 
-        os.path.dirname(os.path.abspath(__file__)).
-        name (str, optional): Nombre del archivo. Defaults to 'WCOMP01.fits'.
-        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
-
-    Returns:
-        numpy.ndarray: Datos de la lampara correspondientes al eje X
-        numpy.ndarray: Datos de la lampara correspondientes al eje Y
-        list: Headers adjuntos al archivo
-    """
-    # Datos y headers del observado
-    filepath = os.path.join(dirpath, name)
-    obs_data, obs_headers = getfileData(filepath=filepath)
-    
-    # Separacion de datos observados para el eje X y el eje Y
-    obs_x = np.array(range(len(obs_data)))
-    obs_y = obs_data
-    
-    # Normalizado de los datos obserbados en el eje Y
-    if (normalize):
-        obs_y, _, _ = normalize_min_max(obs_y)
-    
-    return obs_x, obs_y, obs_headers
-
-def get_Data_NIST(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='Tabla(NIST)_Int_Long_Mat_Ref.csv', 
-                  filter:list=["He I", "Ar I", "Ar II"]
-                  , normalize:bool=True):
-    """Funcion para obtener los datos teoricos a analizar
-
-    Args:
-        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to os.path.dirname(os.path.abspath(__file__)).
-        name (str, optional): Nombre del archivo. Defaults to 'Tabla(NIST)_Int_Long_Mat_Ref.csv'.
-        filter (list, optional): Elementos quimicos de los que se quieren los picos. Defaults to ["He I", "Ar I", "Ar II"].
-        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
-
-    Returns:
-        numpy.ndarray: Datos del teorico correspondientes al eje X
-        numpy.ndarray: Datos del teorico correspondientes al eje Y
-    """
-    
-    # Datos de teoricos del NIST
-    filepath = os.path.join(dirpath, name)
-    nisttr = NIST_Table_Interactor(csv_filename=filepath)
-
-    # Obtencion del dataframe
-    teorico_df = nisttr.get_dataframe(filter=filter)
-
-    # Separacion de datos teoricos para el eje X y el eje Y
-    teo_x = np.array(teorico_df['Wavelength(Ams)'])
-    teo_y = np.array(teorico_df['Intensity'])
-    
-    # Normalizado de los datos en el eje Y
-    if (normalize):
-        teo_y, _, _ = normalize_min_max(target=teo_y)
-    
-    return teo_x, teo_y
 
 def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int):
     """Funcion para hallar la mejor calibracion de un conjunto de datos observados respecto a un conjunto
@@ -180,11 +128,16 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP30.fits", "WCOMP31.fits"]
 CONFIG = Config(files=files, 
                 finddir=findDir,
+                #teo_name="Tabla(NIST)_Int_Long_Mat_Ref.csv",
+                #teo_name="LIBS_He_Ar_Ne_Resolution=100.csv",
+                teo_name="LIBS_He_Ar_Ne_Resolution=1000.csv",
+                use_nist_data=False,
                 w_step=25, 
                 picos_empirico=False, 
-                picos_teorico=False, 
+                picos_teorico=True, 
                 treshold_emp=0.025,
-                treshold_teo=0.025)
+                treshold_teo=0.000001,
+                normalize_window=True)
 
 # Preparar CSV para persistencia de los datos
 df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE', 
@@ -192,19 +145,23 @@ df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE'
 csv_path = os.path.join(CONFIG.SAVEPATH, CONFIG.CSV_NAME)
 df.to_csv(csv_path, index=False)
 
-# Obtencion de Teorico
+# Obtencion de Teorico (de donde corresponda)
 filter:list=["He I", "Ar I", "Ar II"]
-#teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), filter=filter)
-teo_x, teo_y = get_Data_LIBS(dirpath=os.path.dirname(act_dir))
+if (CONFIG.USE_NIST_DATA):
+    teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), name=CONFIG.TEO_NAME, 
+                filter=filter)
+else:
+    teo_x, teo_y = get_Data_LIBS(dirpath=os.path.dirname(act_dir), name=CONFIG.TEO_NAME)
 
 # Aislado de picos del Teorico. Solo si corresponde
 if (CONFIG.PICO_TEORICO):
-    indices, _ = find_peaks(teo_y, height=CONFIG.TRESHOLD_TEO)
+    #indices, _ = find_peaks(teo_y, height=CONFIG.TRESHOLD_TEO)
+    indices, _ = find_peaks(teo_y, threshold=[CONFIG.TRESHOLD_TEO, np.inf])
     teo_x = teo_x[indices]
     teo_y = teo_y[indices]
 
 # Ventanado del Teorico
-ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, CONFIG.W_RANGE, CONFIG.W_STEP)
+ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, CONFIG.W_RANGE, CONFIG.W_STEP, CONFIG.NORMALIZE_WINDOW)
     
 #Filtrar aquellos arreglos que no tienen elementos
 au_x = []

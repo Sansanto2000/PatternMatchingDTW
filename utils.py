@@ -28,13 +28,13 @@ def get_Data_LIBS(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:s
 
     # Separacion de datos teoricos para el eje X y el eje Y
     teo_x = np.array(libs_df['Wavelength (Å)'])
-    libs_df['Sum'] = libs_df['Sum'].str.replace(',', '.')
+    #libs_df['Sum'] = libs_df['Sum'].str.replace(',', '.')
     teo_y = np.array(pd.to_numeric(libs_df['Sum'], errors='coerce'))
+    teo_y = np.nan_to_num(teo_y, nan=0)
     
     # Normalizado de los datos en el eje Y
     if (normalize):
         teo_y, _, _ = normalize_min_max(target=teo_y)
-    
     return teo_x, teo_y
 
 def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
@@ -200,7 +200,7 @@ def gaussianice_arr(xs:list, ys:list, resolution:int, sigma:float, ranges:list, 
         
     return gaussianised_xs, gaussianised_ys
 
-def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
+def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP, normalize:bool=False):
     """Divide en varios subarreglos los datos correspondientes al eje X y el eje Y de una funcion
 
     Args:
@@ -208,6 +208,7 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
         arr_y (numpy.ndarray): Arreglo con los datos de la funcion correspondientes al eje Y
         W_RANGE (_type_): Rango de valores que una ventana cubre a partir de su inicio
         STEP (_type_): Cantidad de valores a considerar entre cada inicio de recorte
+        normalize (bool): Condicion boleana para indicar si las ventanas deben ser normalizadas o no
 
     Returns:
         numpy.ndarray: Arreglo de tuplas en el que cada tupla contiene los datos correspondientes al inicio y fin en el eje
@@ -219,6 +220,9 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
     sub_arrs_x = []
     sub_arrs_y = []
     inicio = 0 #arr_x[0]
+    
+    if len(arr_x)==0:
+        raise ValueError("No se puede rebanar un arreglo vacio")
     
     while inicio < (arr_x[len(arr_x)-1]):
         fin = inicio + W_RANGE
@@ -235,6 +239,8 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP):
         ranges.append((inicio, fin))
         inicio += STEP
         sub_arrs_x.append(arr_aux)
+        if(normalize and len(arr_aux)>0): # En caso de que corresponda normaliza el la ventana calculada
+            arr_auy, _, _ = normalize_min_max(np.array(arr_auy))
         sub_arrs_y.append(arr_auy)
         
     return ranges, sub_arrs_x, sub_arrs_y
