@@ -93,7 +93,15 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
     for i in range(0, len(slices_y)):
         
         # Aplicación DTW del observado respecto al gaussianizado
-        alignment = dtw(obs_y, slices_y[i], keep_internals=True, step_pattern=asymmetric, open_begin=True, open_end=True)
+        alignment = dtw(obs_y, 
+                        slices_y[i], 
+                        keep_internals=True, 
+                        step_pattern=asymmetric, 
+                        #window_type="sakoechiba", 
+                        #window_args={'window_size':1000},
+                        open_begin=True, 
+                        open_end=True
+                        )
         
         # Determinación de la metrica IoU
         w_inicio = w_step*i
@@ -129,15 +137,15 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
 CONFIG = Config(files=files, 
                 finddir=findDir,
                 #teo_name="Tabla(NIST)_Int_Long_Mat_Ref.csv",
-                #teo_name="LIBS_He_Ar_Ne_Resolution=100.csv",
-                teo_name="LIBS_He_Ar_Ne_Resolution=1000.csv",
+                teo_name="LIBS_He_Ar_Ne_Resolution=100.csv",
+                #teo_name="LIBS_He_Ar_Ne_Resolution=1000.csv",
                 use_nist_data=False,
                 w_step=25, 
                 picos_empirico=False, 
-                picos_teorico=True, 
+                picos_teorico=False, 
                 treshold_emp=0.025,
                 treshold_teo=0.000001,
-                normalize_window=True)
+                normalize_window=False)
 
 # Preparar CSV para persistencia de los datos
 df = pd.DataFrame(columns=['File', 'Cant_Ventanas_Probadas', 'W_STEP', 'W_RANGE', 
@@ -242,6 +250,5 @@ for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
         'Error_de_desplazamiento': EAM(calibrado_x, obs_real_x)
         }
     df = df._append(nueva_fila, ignore_index=True)
-    # df = pd.concat([df, pd.DataFrame(list(nueva_fila))], ignore_index=True)
 
     df.to_csv(csv_path, index=False) # Guardar DataFrame actualizado
