@@ -1,3 +1,4 @@
+"""Script para generar experimentos para Paper a presentar en la JCC 2024 """
 import os
 import sys
 import numpy as np
