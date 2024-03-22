@@ -132,7 +132,7 @@ if (CONFIG.DETECT_EMPIRICAL_PEAKS):
 if (CONFIG.ZERO_PADDING):
     teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
 
-plt.figure(figsize=(10, 6), dpi=800)
+plt.figure(figsize=(10, 6), dpi=1200)
 
 plt.bar(teo_x, teo_y, width=6, label='Teorico', color='black', align='edge', alpha=1) # LIBS
 
