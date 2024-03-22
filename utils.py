@@ -251,13 +251,13 @@ def gaussianice_arr(xs:list, ys:list, resolution:int, sigma:float, ranges:list, 
         
     return gaussianised_xs, gaussianised_ys
 
-def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP, normalize:bool=False):
+def slice_with_range_step(arr_x, arr_y, LENGTH, STEP, normalize:bool=False):
     """Divide en varios subarreglos los datos correspondientes al eje X y el eje Y de una funcion
 
     Args:
         arr_x (numpy.ndarray): Arreglo con los datos de la funcion correspondientes al eje X
         arr_y (numpy.ndarray): Arreglo con los datos de la funcion correspondientes al eje Y
-        W_RANGE (_type_): Rango de valores que una ventana cubre a partir de su inicio
+        LENGTH (_type_): Rango de valores que una ventana cubre a partir de su inicio
         STEP (_type_): Cantidad de valores a considerar entre cada inicio de recorte
         normalize (bool): Condicion boleana para indicar si las ventanas deben ser normalizadas o no
 
@@ -276,7 +276,7 @@ def slice_with_range_step(arr_x, arr_y, W_RANGE, STEP, normalize:bool=False):
         raise ValueError("No se puede rebanar un arreglo vacio")
     
     while inicio < (arr_x[len(arr_x)-1]):
-        fin = inicio + W_RANGE
+        fin = inicio + LENGTH
         arr_aux=[]
         arr_auy=[]
         i = 0

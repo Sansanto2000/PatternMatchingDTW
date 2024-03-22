@@ -15,7 +15,7 @@ sys.path.append(
             )
         )
     )
-from utils import get_Data_LIBS, get_Data_NIST, zero_padding
+from utils import get_Data_LIBS, get_Data_NIST, zero_padding, slice_with_range_step
 
 class Config:
     
@@ -87,7 +87,7 @@ CONFIG = Config(    # Constantes de configuracion
     WINDOW_STEP=25,
     WINDOW_LENGTH=2000,
     NORMALIZE_WINDOWS=False,
-    ZERO_PADDING=True,
+    ZERO_PADDING=False,
     DETECT_EMPIRICAL_PEAKS=True,
     TRESHOLD_EMPIRICAL_PEAKS=0.0,
     HEIGHT_EMPIRICAL_PEAKS=0.0
@@ -132,16 +132,37 @@ if (CONFIG.DETECT_EMPIRICAL_PEAKS):
 if (CONFIG.ZERO_PADDING):
     teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
 
-plt.figure(figsize=(10, 6), dpi=1200)
+# Ventanado de datos de referencia(teorico)
+ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, 
+                                                   CONFIG.WINDOW_LENGTH, 
+                                                   CONFIG.WINDOW_STEP, 
+                                                   CONFIG.NORMALIZE_WINDOWS)
 
-plt.bar(teo_x, teo_y, width=6, label='Teorico', color='black', align='edge', alpha=1) # LIBS
+print(len(teo_x), len(teo_y))
 
-plt.savefig(os.path.join(act_dir, "teorico.svg"))
-plt.close()
+#Filtrar aquellos arreglos que no tienen elementos
+au_x = []
+au_y = []
+for i in range(len(slices_x)):
+    if (len(slices_x[i]) > 0):
+        au_x.append(slices_x[i])
+        au_y.append(slices_y[i])
+slices_x = np.array(au_x, dtype=object)
+slices_y = np.array(au_y, dtype=object)
 
-print ('----------------')
-print (f'LEN(teo_x)={len(teo_x)}\
-    [{teo_x[0]}, ...,{teo_x[-1]}]')
-print (f'LEN(teo_y)={len(teo_y)} \
-    [{teo_y[0]}, ...,{teo_y[-1]}]')
-print ('----------------')
+print(len(teo_x), len(teo_y))
+
+
+# plt.figure(figsize=(10, 6), dpi=1200)
+
+# plt.bar(teo_x, teo_y, width=6, label='Teorico', color='black', align='edge', alpha=1) # LIBS
+
+# plt.savefig(os.path.join(act_dir, "teorico.svg"))
+# plt.close()
+
+# print ('----------------')
+# print (f'LEN(teo_x)={len(teo_x)}\
+#     [{teo_x[0]}, ...,{teo_x[-1]}]')
+# print (f'LEN(teo_y)={len(teo_y)} \
+#     [{teo_y[0]}, ...,{teo_y[-1]}]')
+# print ('----------------')
