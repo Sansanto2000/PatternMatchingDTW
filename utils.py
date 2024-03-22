@@ -300,6 +300,8 @@ def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value
     
 
 class Processor:
+    """(Legacy Class)
+    """
     class FuntionType(Enum):
         LINEAL = "LINEAL"
         GAUSSIAN = "GAUSSIAN"
