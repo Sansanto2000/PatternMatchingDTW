@@ -1,4 +1,5 @@
 import os
+import math
 from enum import Enum
 from astropy.io import fits
 from scipy.ndimage import gaussian_filter1d
@@ -7,6 +8,56 @@ import numpy as np
 from scipy.stats import norm
 from NIST_Table_Interactor import NIST_Table_Interactor
 import pandas as pd
+
+def zero_padding(arr_x:np.ndarray, arr_y:np.ndarray, dist:int):
+    """Funcion para rellenar de ceros un arreglo de datos Y conforme falten valores
+    intermedios en un arrglo X ordenado. Retorna el arreglo de datos X con los nuevos
+    valores intermedios y el arreglo de datos Y con las incerciones de 0 correspondientes
+
+    Args:
+        arr_x (np.ndarray): Arreglo de datos X ordenado, de este se revizara si hay 
+        intervalos de valores que falten agregar.
+        arr_y (np.ndarray): Arreglo d edatos Y. Acorde a los datos faltantes de X se 
+        agregaran valores en el mismo.
+        dist (int): Cantidad de unidades cada cual se deben agregar inserciones.
+
+    Returns:
+        numpy.ndarray: Arreglo de datos X actualizado.
+        numpy.ndarray: Arreglo de datos Y actualizado.
+    """
+
+    # Encontrar las diferencias entre valores consecutivos
+    diffs = np.diff(arr_x)
+
+    # Encontrar las posiciones donde se deben insertar ceros
+    zeros_pos = np.where(diffs > dist)[0]
+
+    # Insertar ceros en las posiciones encontradas
+    acumulate_count = 0
+    for i, pos in enumerate(zeros_pos):
+        # Calcular cuántos ceros se deben insertar en esta posición
+        zero_count = math.floor((diffs[pos] - 1) / dist)
+
+        # Calcula arreglos de datos a insertar en cada arreglo recibido
+        news_x = np.arange(
+            arr_x[pos+acumulate_count]+dist, 
+            arr_x[pos+acumulate_count+1],
+            dist, dtype=arr_x.dtype
+            )
+        
+        news_y = np.zeros(len(news_x), dtype=arr_y.dtype)
+        
+        # Insertar nuevas longitudes de onda
+        arr_x = np.insert(arr_x, pos+acumulate_count+1, news_x)
+
+        # Insertar los ceros correspondientes
+        arr_y = np.insert(arr_y, pos+acumulate_count+1, news_y)
+        
+        # Actualiza la cantidad acumulada para poder insertar conociendo los 
+        # desplazamientos previos
+        acumulate_count += len(news_x)
+    
+    return arr_x, arr_y
 
 def get_Data_LIBS(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='LIBS_He_Ar_Ne_Resolution=1000.csv', 
                   normalize:bool=True):
