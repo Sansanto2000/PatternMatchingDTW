@@ -1,8 +1,10 @@
 """Script para generar experimentos para Paper a presentar en la JCC 2024 """
 import os
 import sys
+import math
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 sys.path.append(
     os.path.dirname( # Root (folder)
@@ -13,7 +15,7 @@ sys.path.append(
             )
         )
     )
-from utils import get_Data_LIBS, get_Data_NIST
+from utils import get_Data_LIBS, get_Data_NIST, zero_padding
 
 class Config:
     
@@ -22,7 +24,8 @@ class Config:
                  TEORICAL_DATA_CSV_NAME:str="Tabla(NIST)_Int_Long_Mat_Ref.csv",
                  SAVE_DIR:str=os.path.dirname(os.path.abspath(__file__)), OUTPUT_CSV_NAME:str="output.csv", 
                  WINDOW_STEP:int=100, WINDOW_LENGTH:int=1900, NORMALIZE_WINDOWS:bool=False, 
-                 DETECT_EMPIRICAL_PEAKS:bool=False, TRESHOLD_EMPIRICAL_PEAKS:float=0.0, HEIGHT_EMPIRICAL_PEAKS:bool=False):
+                 ZERO_PADDING:bool=False, DETECT_EMPIRICAL_PEAKS:bool=False, 
+                 TRESHOLD_EMPIRICAL_PEAKS:float=0.0, HEIGHT_EMPIRICAL_PEAKS:bool=False):
         """Funcion de inicializacion de la clase Config
 
         Args:
@@ -55,6 +58,7 @@ class Config:
         self.WINDOW_LENGTH = WINDOW_LENGTH
         self.SAVE_DIR = SAVE_DIR
         self.NORMALIZE_WINDOWS = NORMALIZE_WINDOWS
+        self.ZERO_PADDING = ZERO_PADDING
         self.DETECT_EMPIRICAL_PEAKS = DETECT_EMPIRICAL_PEAKS
         self.TRESHOLD_EMPIRICAL_PEAKS = TRESHOLD_EMPIRICAL_PEAKS
         self.HEIGHT_EMPIRICAL_PEAKS = HEIGHT_EMPIRICAL_PEAKS
@@ -83,7 +87,8 @@ CONFIG = Config(    # Constantes de configuracion
     WINDOW_STEP=25,
     WINDOW_LENGTH=2000,
     NORMALIZE_WINDOWS=False,
-    DETECT_EMPIRICAL_PEAKS = False,
+    ZERO_PADDING=True,
+    DETECT_EMPIRICAL_PEAKS=True,
     TRESHOLD_EMPIRICAL_PEAKS=0.0,
     HEIGHT_EMPIRICAL_PEAKS=0.0
 )
@@ -96,10 +101,11 @@ if not os.path.exists(CONFIG.SAVE_DIR):
 df = pd.DataFrame(columns=['Source of reference', 
                            'peaks in data', 'Treshold', 'Height'
                            'Normalized', 
+                           'Zero Padding',
                            'W_STEP', 'W_RANGE', 'Count of Windows', 
                            '(AVG) Distance', 
-                           '(AVG) IoU_mejor_ventana', 
-                           '(AVG) Error_de_desplazamiento'])
+                           '(AVG) IoU', 
+                           '(AVG) Scroll Error'])
 csv_path = os.path.join(CONFIG.SAVE_DIR, CONFIG.OUTPUT_CSV_NAME)
 df.to_csv(csv_path, index=False)
 
@@ -121,6 +127,17 @@ if (CONFIG.DETECT_EMPIRICAL_PEAKS):
                             )
     teo_x = teo_x[indices]
     teo_y = teo_y[indices]
+
+# Rellenado de ceros (si corresponde)
+if (CONFIG.ZERO_PADDING):
+    teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
+
+plt.figure(figsize=(10, 6), dpi=800)
+
+plt.bar(teo_x, teo_y, width=6, label='Teorico', color='black', align='edge', alpha=1) # LIBS
+
+plt.savefig(os.path.join(act_dir, "teorico.svg"))
+plt.close()
 
 print ('----------------')
 print (f'LEN(teo_x)={len(teo_x)}\
