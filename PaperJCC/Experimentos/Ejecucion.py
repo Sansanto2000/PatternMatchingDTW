@@ -132,8 +132,8 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
 
 def run_calibrations(CONFIG:Config):
     """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
-    Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien puede generar
-    graficos de las mejores calibraciones que encuentre
+    Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien guardar puede un 
+    grafico de muestra para comprobacion del usuario.
 
     Args:
         CONFIG (Config): Archivo con datos de configuracion que detalla como se deben hacer las
@@ -230,25 +230,31 @@ def run_calibrations(CONFIG:Config):
         IoUs = np.append(IoUs, IoU)
         EAMs = np.append(EAMs, EAM(calibrado_x, obs_real_x))
 
-        # Genera y almacena grafico en caso de que corresponda
-        if (CONFIG.GRAPH_BESTS):
-            plt.figure(figsize=(10, 6), dpi=800) # Ajuste de tamaño de la figura
+    # Genera y almacena grafico de ultimo archivo en caso de que corresponda
+    if (CONFIG.GRAPH_BESTS):
+        plt.figure(figsize=(10, 6), dpi=800) # Ajuste de tamaño de la figura
 
-            min_teo_grap = calibrado_x[0] if calibrado_x[0] < obs_real_x[0] else obs_real_x[0] # Seccion del teorico
-            min_teo_grap -= CONFIG.W_STEP
-            max_teo_grap = calibrado_x[-1] if calibrado_x[-1] > obs_real_x[-1] else obs_real_x[-1]
-            max_teo_grap += CONFIG.W_STEP
-            grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
-            plt.bar(grap_teo_x, -grap_teo_y, width=10, label='Teorico', color='blue', align='edge', alpha=0.7) 
+        min_teo_grap = calibrado_x[0] if calibrado_x[0] < obs_real_x[0] else obs_real_x[0] # Seccion del teorico
+        min_teo_grap -= CONFIG.WINDOW_STEP
+        max_teo_grap = calibrado_x[-1] if calibrado_x[-1] > obs_real_x[-1] else obs_real_x[-1]
+        max_teo_grap += CONFIG.WINDOW_STEP
+        grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
+        plt.bar(grap_teo_x, -grap_teo_y, width=10, label='Teorico', color='blue', align='edge', alpha=0.7) 
 
-            plt.bar(obs_real_x, obs_y, width=2, label='Emp Real', color='black', align='edge', alpha=0.7) # Real
+        plt.bar(obs_real_x, obs_y, width=2, label='Emp Real', color='black', align='edge', alpha=0.7) # Real
+        
+        plt.bar(calibrado_x, obs_y, width=3, label='Emp Optimo', color='red', align='edge', alpha=1) # Optimo
             
-            plt.bar(calibrado_x, obs_y, width=3, label='Emp Optimo', color='red', align='edge', alpha=1) # Optimo
-                
-            plt.legend()
-
-            plt.savefig(os.path.join(CONFIG.SAVEPATH, f"{file}_calibrado.png"))
-            plt.close()
+        plt.legend()
+        fig_name = "NIST" if(CONFIG.USE_NIST_DATA) else "LIBS"
+        if (fig_name=="LIBS"):
+            fig_name += "100" if("100" in CONFIG.TEORICAL_DATA_CSV_NAME) else "260"
+        fig_name += "_EP" if(CONFIG.DETECT_EMPIRICAL_PEAKS) else ""
+        fig_name += "_TP" if(CONFIG.DETECT_TEORICAL_PEAKS) else ""
+        fig_name += "_NOR" if(CONFIG.NORMALIZE_WINDOWS) else ""
+        fig_name += "_ZP" if(CONFIG.ZERO_PADDING) else ""
+        plt.savefig(os.path.join(CONFIG.SAVE_DIR, f"{fig_name}.svg"))
+        plt.close()
             
     # Guardar datos promedios de ejecucion en CSV
     nueva_fila = { # Añadir la nueva fila al DataFrame
@@ -281,30 +287,40 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"]
 
-CONFIG = Config(    # Constantes de configuracion
-    FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
-    FILES=files,
-    SAVE_DIR=os.path.join(act_dir, 'output'),
-    OUTPUT_CSV_NAME="output.csv",
+# Ejecutar calibraciones para todas las combinaciones de interes
+for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv", 
+                      "LIBS_He_Ar_Ne_Resolution=100.csv", 
+                      "LIBS_He_Ar_Ne_Resolution=260.csv"]:
     
-    TEORICAL_DATA_FOLDER=os.path.dirname(os.path.dirname(act_dir)),
-    TEORICAL_DATA_CSV_NAME="Tabla(NIST)_Int_Long_Mat_Ref.csv",
-    #TEORICAL_DATA_CSV_NAME="LIBS_He_Ar_Ne_Resolution=100.csv",
-    #TEORICAL_DATA_CSV_NAME="LIBS_He_Ar_Ne_Resolution=260.csv",
-    USE_NIST_DATA=True,
-    
-    WINDOW_STEP=25,
-    WINDOW_LENGTH=2000,
-    NORMALIZE_WINDOWS=False,
-    ZERO_PADDING=False,
-    DETECT_TEORICAL_PEAKS=False,
-    TRESHOLD_TEORICAL_PEAKS=0.0,
-    HEIGHT_TEORICAL_PEAKS=0.0,
-    DETECT_EMPIRICAL_PEAKS=False,
-    TRESHOLD_EMPIRICAL_PEAKS=0.0,
-    HEIGHT_EMPIRICAL_PEAKS=0.0,
-    
-    GRAPH_BESTS=True
-)
-
-run_calibrations(CONFIG=CONFIG)
+    for detect_empirical_peaks in [True, False]:
+        
+        for detect_teorical_peaks in [True, False]:
+            
+            for normalize_windows in [True, False]:
+                
+                for zero_padding_bool in [True, False]:
+                    
+                    config = Config(
+                        FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
+                        FILES=files,
+                        SAVE_DIR=os.path.join(act_dir, 'output'),
+                        OUTPUT_CSV_NAME="output.csv",
+                        
+                        TEORICAL_DATA_FOLDER=os.path.dirname(os.path.dirname(act_dir)),
+                        TEORICAL_DATA_CSV_NAME=teorical_data_csv_name,
+                        USE_NIST_DATA= True if("NIST" in teorical_data_csv_name) else False,
+                        
+                        WINDOW_STEP=25,
+                        WINDOW_LENGTH=2000,
+                        NORMALIZE_WINDOWS=normalize_windows,
+                        ZERO_PADDING=zero_padding_bool,
+                        DETECT_TEORICAL_PEAKS=detect_teorical_peaks,
+                        TRESHOLD_TEORICAL_PEAKS=0.0,
+                        HEIGHT_TEORICAL_PEAKS=0.0,
+                        DETECT_EMPIRICAL_PEAKS=detect_empirical_peaks,
+                        TRESHOLD_EMPIRICAL_PEAKS=0.0,
+                        HEIGHT_EMPIRICAL_PEAKS=0.0,
+                        
+                        GRAPH_BESTS=True
+                    )
+                    run_calibrations(CONFIG=config)
