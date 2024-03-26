@@ -17,7 +17,7 @@ sys.path.append(
             )
         )
     )
-from utils import get_Data_LIBS, get_Data_NIST, get_Data_FILE, zero_padding, slice_with_range_step
+from utils import get_Data_LIBS, get_Data_NIST, get_Data_FILE, zero_padding, slice_with_range_step, subconj_generator
 from IOU import IoU
 from EM import EAM
 
@@ -31,7 +31,7 @@ class Config:
                  ZERO_PADDING:bool=False, DETECT_TEORICAL_PEAKS:bool=False, 
                  TRESHOLD_TEORICAL_PEAKS:float=0.0, HEIGHT_TEORICAL_PEAKS:bool=False,
                  DETECT_EMPIRICAL_PEAKS:bool=False, TRESHOLD_EMPIRICAL_PEAKS:float=0.0, 
-                 HEIGHT_EMPIRICAL_PEAKS:bool=False):
+                 HEIGHT_EMPIRICAL_PEAKS:bool=False, GRAPH_BESTS:bool=False):
         """Funcion de inicializacion de la clase Config
 
         Args:
@@ -58,6 +58,8 @@ class Config:
             TRESHOLD_EMPIRICAL_PEAKS (float, optional): Diferencia minima con picos vecinos para la busqueda de picos en el 
             empirico. Defaults to 0.0.
             HEIGHT_EMPIRICAL_PEAKS (bool, optional): Altura minima para la busqueda de picos en el empirico. Defaults to 0.0.
+            GRAPH_BESTS (bool, optional): Condicion boleana par saber si se generaran y guardaran graficos de referencia de 
+            las mejores calibraciones o no. Defaults to False.
             """
         self.FILES_DIR = FILES_DIR
         self.FILES = FILES
@@ -76,6 +78,7 @@ class Config:
         self.DETECT_EMPIRICAL_PEAKS = DETECT_EMPIRICAL_PEAKS
         self.TRESHOLD_EMPIRICAL_PEAKS = TRESHOLD_EMPIRICAL_PEAKS
         self.HEIGHT_EMPIRICAL_PEAKS = HEIGHT_EMPIRICAL_PEAKS
+        self.GRAPH_BESTS = GRAPH_BESTS
 
 def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int):
     """Funcion para hallar las calibraciones correspondientes a todas los segmentos de una ventana.
@@ -127,6 +130,147 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
     
     return alignments[best_index], best_index, IoUs[best_index]
 
+def run_calibrations(CONFIG:Config):
+    """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
+    Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien puede generar
+    graficos de las mejores calibraciones que encuentre
+
+    Args:
+        CONFIG (Config): Archivo con datos de configuracion que detalla como se deben hacer las
+        calibraciones del grupo de archivos a procesar.
+    """
+    # Verifica existencia de la carpeta de guardado de resultados, si no existe la crea
+    if not os.path.exists(CONFIG.SAVE_DIR):
+        os.makedirs(CONFIG.SAVE_DIR)
+
+    # Preparar CSV para persistencia de los datos
+    csv_path = os.path.join(CONFIG.SAVE_DIR, CONFIG.OUTPUT_CSV_NAME)
+    try: # Si existe lo lee
+        df = pd.read_csv(csv_path)
+    except FileNotFoundError: # Si no existe lo crea
+        df = pd.DataFrame(columns=['Source of reference', 
+                                'peaks in data', 'Treshold', 'Height'
+                                'Normalized', 
+                                'Zero Padding',
+                                'W_STEP', 'W_LENGTH', 'Count of Windows', 
+                                '(AVG) Distance', 
+                                '(AVG) IoU', 
+                                '(AVG) Scroll Error'])
+        df.to_csv(csv_path, index=False)
+
+
+    # Obtencion de datos de referencia (Teorico) de donde corresponda
+    if (CONFIG.USE_NIST_DATA):
+        filter:list=["He I", "Ar I", "Ar II"]
+        teo_x, teo_y = get_Data_NIST(dirpath=CONFIG.TEORICAL_DATA_FOLDER, 
+                                    name=CONFIG.TEORICAL_DATA_CSV_NAME, 
+                                    filter=filter)
+    else:
+        teo_x, teo_y = get_Data_LIBS(dirpath=CONFIG.TEORICAL_DATA_FOLDER, 
+                                    name=CONFIG.TEORICAL_DATA_CSV_NAME)
+
+    # Aislado de picos (si corresponde)
+    if (CONFIG.DETECT_TEORICAL_PEAKS):
+        indices, _ = find_peaks(teo_y, 
+                                threshold=[CONFIG.TRESHOLD_TEORICAL_PEAKS, np.inf],
+                                height= [CONFIG.HEIGHT_TEORICAL_PEAKS, np.inf]
+                                )
+        teo_x = teo_x[indices]
+        teo_y = teo_y[indices]
+
+    # Rellenado de ceros (si corresponde)
+    if (CONFIG.ZERO_PADDING):
+        teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
+
+    # Ventanado de datos de referencia(teorico)
+    ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, 
+                                                    CONFIG.WINDOW_LENGTH, 
+                                                    CONFIG.WINDOW_STEP, 
+                                                    CONFIG.NORMALIZE_WINDOWS)
+
+    #Filtrar aquellos arreglos que no tienen elementos
+    au_x = []
+    au_y = []
+    for i in range(len(slices_x)):
+        if (len(slices_x[i]) > 0):
+            au_x.append(slices_x[i])
+            au_y.append(slices_y[i])
+    slices_x = np.array(au_x, dtype=object)
+    slices_y = np.array(au_y, dtype=object)
+
+    # --------PROCESADO DE ARCHIVOS-----------
+    Distances = np.array()
+    IoUs = np.array()
+    EAMs = np.array()
+    for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
+
+        # Obtencion de empirico
+        obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=CONFIG.FILES_DIR, name=file)
+        obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
+        
+        # Aislado de picos (si corresponde)
+        if (CONFIG.DETECT_EMPIRICAL_PEAKS):
+            indices, _ = find_peaks(obs_y, 
+                                    threshold=[CONFIG.TRESHOLD_EMPIRICAL_PEAKS, np.inf],
+                                    height= [CONFIG.HEIGHT_EMPIRICAL_PEAKS, np.inf]
+                                    )
+            obs_x = obs_x[indices]
+            obs_y = obs_y[indices]
+        
+        # Busqueda de la mejor calibracion y obtencion de metricas
+        best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
+        
+        # Dispocición en vector de las longitudes de ondas calibradas para obs
+        calibrado_x = np.full(len(best_alignment.index1), None)
+        for i in range(len(best_alignment.index1)): # Calibrado
+            calibrado_x[best_alignment.index1[i]] = slices_x[index][best_alignment.index2[i]]
+            
+        # Agregado de metricas en arreglos de almacenamiento
+        Distances = np.append(Distances, best_alignment.distance)
+        IoUs = np.append(IoUs, IoU)
+        EAMs = np.append(EAMs, EAM(calibrado_x, obs_real_x))
+
+        # Genera y almacena grafico en caso de que corresponda
+        if (CONFIG.GRAPH_BESTS):
+            plt.figure(figsize=(10, 6), dpi=800) # Ajuste de tamaño de la figura
+
+            min_teo_grap = calibrado_x[0] if calibrado_x[0] < obs_real_x[0] else obs_real_x[0] # Seccion del teorico
+            min_teo_grap -= CONFIG.W_STEP
+            max_teo_grap = calibrado_x[-1] if calibrado_x[-1] > obs_real_x[-1] else obs_real_x[-1]
+            max_teo_grap += CONFIG.W_STEP
+            grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
+            plt.bar(grap_teo_x, -grap_teo_y, width=10, label='Teorico', color='blue', align='edge', alpha=0.7) 
+
+            plt.bar(obs_real_x, obs_y, width=2, label='Emp Real', color='black', align='edge', alpha=0.7) # Real
+            
+            plt.bar(calibrado_x, obs_y, width=3, label='Emp Optimo', color='red', align='edge', alpha=1) # Optimo
+                
+            plt.legend()
+
+            plt.savefig(os.path.join(CONFIG.SAVEPATH, f"{file}_calibrado.png"))
+            plt.close()
+            
+    # Guardar datos promedios de ejecucion en CSV
+    nueva_fila = { # Añadir la nueva fila al DataFrame
+        'Source of reference':'NIST' if (CONFIG.USE_NIST_DATA) else 'LIBS', 
+        'peaks in teorical data':CONFIG.DETECT_TEORICAL_PEAKS, 
+        'Treshold teorical data':CONFIG.TRESHOLD_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-', 
+        'Height teorical data':CONFIG.HEIGHT_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-',
+        'peaks in empirical data':CONFIG.DETECT_EMPIRICAL_PEAKS, 
+        'Treshold empirical data':CONFIG.TRESHOLD_EMPIRICAL_PEAKS if (CONFIG.DETECT_EMPIRICAL_PEAKS) else '-', 
+        'Height empirical data':CONFIG.HEIGHT_EMPIRICAL_PEAKS if (CONFIG.DETECT_EMPIRICAL_PEAKS) else '-',
+        'Normalized':CONFIG.NORMALIZE_WINDOWS, 
+        'Zero Padding':CONFIG.ZERO_PADDING,
+        'W_STEP':CONFIG.WINDOW_STEP, 
+        'W_LENGTH':CONFIG.WINDOW_LENGTH, 
+        'Count of Windows':len(slices_x), 
+        '(AVG) Distance':np.mean(Distances), 
+        '(AVG) IoU':np.mean(IoUs), 
+        '(AVG) Scroll Error':np.mean(EAMs)
+        }
+    df = df._append(nueva_fila, ignore_index=True)
+
+    df.to_csv(csv_path, index=False) # Guardar DataFrame actualizado
 
 act_dir = os.path.dirname(os.path.abspath(__file__)) # Directorio actual
 files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP05.fits", # Archivos a procesar
@@ -158,129 +302,9 @@ CONFIG = Config(    # Constantes de configuracion
     HEIGHT_TEORICAL_PEAKS=0.0,
     DETECT_EMPIRICAL_PEAKS=False,
     TRESHOLD_EMPIRICAL_PEAKS=0.0,
-    HEIGHT_EMPIRICAL_PEAKS=0.0
+    HEIGHT_EMPIRICAL_PEAKS=0.0,
+    
+    GRAPH_BESTS=True
 )
 
-# Verifica existencia de la carpeta de guardado de resultados, si no existe la crea
-if not os.path.exists(CONFIG.SAVE_DIR):
-    os.makedirs(CONFIG.SAVE_DIR)
-
-# Preparar CSV para persistencia de los datos
-df = pd.DataFrame(columns=['Source of reference', 
-                           'peaks in data', 'Treshold', 'Height'
-                           'Normalized', 
-                           'Zero Padding',
-                           'W_STEP', 'W_LENGTH', 'Count of Windows', 
-                           '(AVG) Distance', 
-                           '(AVG) IoU', 
-                           '(AVG) Scroll Error'])
-csv_path = os.path.join(CONFIG.SAVE_DIR, CONFIG.OUTPUT_CSV_NAME)
-df.to_csv(csv_path, index=False)
-
-# Obtencion de datos de referencia (Teorico) de donde corresponda
-if (CONFIG.USE_NIST_DATA):
-    filter:list=["He I", "Ar I", "Ar II"]
-    teo_x, teo_y = get_Data_NIST(dirpath=CONFIG.TEORICAL_DATA_FOLDER, 
-                                 name=CONFIG.TEORICAL_DATA_CSV_NAME, 
-                                 filter=filter)
-else:
-    teo_x, teo_y = get_Data_LIBS(dirpath=CONFIG.TEORICAL_DATA_FOLDER, 
-                                 name=CONFIG.TEORICAL_DATA_CSV_NAME)
-
-# Aislado de picos (si corresponde)
-if (CONFIG.DETECT_TEORICAL_PEAKS):
-    indices, _ = find_peaks(teo_y, 
-                            threshold=[CONFIG.TRESHOLD_TEORICAL_PEAKS, np.inf],
-                            height= [CONFIG.HEIGHT_TEORICAL_PEAKS, np.inf]
-                            )
-    teo_x = teo_x[indices]
-    teo_y = teo_y[indices]
-
-# Rellenado de ceros (si corresponde)
-if (CONFIG.ZERO_PADDING):
-    teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
-
-# Ventanado de datos de referencia(teorico)
-ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, 
-                                                   CONFIG.WINDOW_LENGTH, 
-                                                   CONFIG.WINDOW_STEP, 
-                                                   CONFIG.NORMALIZE_WINDOWS)
-
-#Filtrar aquellos arreglos que no tienen elementos
-au_x = []
-au_y = []
-for i in range(len(slices_x)):
-    if (len(slices_x[i]) > 0):
-        au_x.append(slices_x[i])
-        au_y.append(slices_y[i])
-slices_x = np.array(au_x, dtype=object)
-slices_y = np.array(au_y, dtype=object)
-
-# --------PROCESADO DE ARCHIVOS-----------
-Distances = np.array()
-IoUs = np.array()
-EAMs = np.array()
-for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
-
-    # Obtencion de empirico
-    obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=CONFIG.FILES_DIR, name=file)
-    obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
-    
-    # Aislado de picos (si corresponde)
-    if (CONFIG.DETECT_EMPIRICAL_PEAKS):
-        indices, _ = find_peaks(obs_y, 
-                                threshold=[CONFIG.TRESHOLD_EMPIRICAL_PEAKS, np.inf],
-                                height= [CONFIG.HEIGHT_EMPIRICAL_PEAKS, np.inf]
-                                )
-        obs_x = obs_x[indices]
-        obs_y = obs_y[indices]
-    
-    # Busqueda de la mejor calibracion y obtencion de metricas
-    best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
-    
-    # Dispocición en vector de las longitudes de ondas calibradas para obs
-    calibrado_x = np.full(len(best_alignment.index1), None)
-    for i in range(len(best_alignment.index1)): # Calibrado
-        calibrado_x[best_alignment.index1[i]] = slices_x[index][best_alignment.index2[i]]
-        
-    # Agregado de metricas en arreglos de almacenamiento
-    Distances = np.append(Distances, best_alignment.distance)
-    IoUs = np.append(IoUs, IoU)
-    EAMs = np.append(EAMs, EAM(calibrado_x, obs_real_x))
-        
-# Guardar datos promedios de ejecucion en CSV
-nueva_fila = { # Añadir la nueva fila al DataFrame
-    'Source of reference':'NIST' if (CONFIG.USE_NIST_DATA) else 'LIBS', 
-    'peaks in teorical data':CONFIG.DETECT_TEORICAL_PEAKS, 
-    'Treshold teorical data':CONFIG.TRESHOLD_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-', 
-    'Height teorical data':CONFIG.HEIGHT_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-',
-    'peaks in empirical data':CONFIG.DETECT_EMPIRICAL_PEAKS, 
-    'Treshold empirical data':CONFIG.TRESHOLD_EMPIRICAL_PEAKS if (CONFIG.DETECT_EMPIRICAL_PEAKS) else '-', 
-    'Height empirical data':CONFIG.HEIGHT_EMPIRICAL_PEAKS if (CONFIG.DETECT_EMPIRICAL_PEAKS) else '-',
-    'Normalized':CONFIG.NORMALIZE_WINDOWS, 
-    'Zero Padding':CONFIG.ZERO_PADDING,
-    'W_STEP':CONFIG.WINDOW_STEP, 
-    'W_LENGTH':CONFIG.WINDOW_LENGTH, 
-    'Count of Windows':len(slices_x), 
-    '(AVG) Distance':np.mean(Distances), 
-    '(AVG) IoU':np.mean(IoUs), 
-    '(AVG) Scroll Error':np.mean(EAMs)
-    }
-df = df._append(nueva_fila, ignore_index=True)
-
-df.to_csv(csv_path, index=False) # Guardar DataFrame actualizado
-
-
-# plt.figure(figsize=(10, 6), dpi=1200)
-
-# plt.bar(teo_x, teo_y, width=6, label='Teorico', color='black', align='edge', alpha=1) # LIBS
-
-# plt.savefig(os.path.join(act_dir, "teorico.svg"))
-# plt.close()
-
-# print ('----------------')
-# print (f'LEN(teo_x)={len(teo_x)}\
-#     [{teo_x[0]}, ...,{teo_x[-1]}]')
-# print (f'LEN(teo_y)={len(teo_y)} \
-#     [{teo_y[0]}, ...,{teo_y[-1]}]')
-# print ('----------------')
+run_calibrations(CONFIG=CONFIG)
