@@ -28,10 +28,11 @@ class Config:
                  TEORICAL_DATA_CSV_NAME:str="Tabla(NIST)_Int_Long_Mat_Ref.csv",
                  SAVE_DIR:str=os.path.dirname(os.path.abspath(__file__)), OUTPUT_CSV_NAME:str="output.csv", 
                  WINDOW_STEP:int=100, WINDOW_LENGTH:int=1900, NORMALIZE_WINDOWS:bool=False, 
-                 ZERO_PADDING:bool=False, DETECT_TEORICAL_PEAKS:bool=False, 
-                 TRESHOLD_TEORICAL_PEAKS:float=0.0, HEIGHT_TEORICAL_PEAKS:bool=False,
-                 DETECT_EMPIRICAL_PEAKS:bool=False, TRESHOLD_EMPIRICAL_PEAKS:float=0.0, 
-                 HEIGHT_EMPIRICAL_PEAKS:bool=False, GRAPH_BESTS:bool=False):
+                 ZERO_PADDING:bool=False, FINAL_LINE_SPACING:bool=False,
+                 DETECT_TEORICAL_PEAKS:bool=False, TRESHOLD_TEORICAL_PEAKS:float=0.0, 
+                 HEIGHT_TEORICAL_PEAKS:bool=False, DETECT_EMPIRICAL_PEAKS:bool=False, 
+                 TRESHOLD_EMPIRICAL_PEAKS:float=0.0, HEIGHT_EMPIRICAL_PEAKS:bool=False, 
+                 GRAPH_BESTS:bool=False):
         """Funcion de inicializacion de la clase Config
 
         Args:
@@ -48,6 +49,8 @@ class Config:
             WINDOW_LENGTH (int, optional): Rango de longitudes de onda que una ventana cubre. Defaults to 1900.
             NORMALIZE_WINDOWS (bool, optional): Condicion boleana par saber si se normalizaran las ventanas teoricas 
             posterior a su segmentado. Defaults to False.
+            FINAL_LINE_SPACING (bool, optional): Determina si la calibracion final sera interlineada respecto a la 
+            ventana o no. Defaults to False.
             DETECT_TEORICAL_PEAKS (bool, optional): Condicion boleana par saber si se recortara el teorico segun los picos
             disponibles o no. Defaults to False.
             TRESHOLD_TEORICAL_PEAKS (float, optional): Diferencia minima con picos vecinos para la busqueda de picos en el 
@@ -72,6 +75,7 @@ class Config:
         self.SAVE_DIR = SAVE_DIR
         self.NORMALIZE_WINDOWS = NORMALIZE_WINDOWS
         self.ZERO_PADDING = ZERO_PADDING
+        self.FINAL_LINE_SPACING = FINAL_LINE_SPACING
         self.DETECT_TEORICAL_PEAKS = DETECT_TEORICAL_PEAKS
         self.TRESHOLD_TEORICAL_PEAKS = TRESHOLD_TEORICAL_PEAKS
         self.HEIGHT_TEORICAL_PEAKS = HEIGHT_TEORICAL_PEAKS
@@ -80,7 +84,7 @@ class Config:
         self.HEIGHT_EMPIRICAL_PEAKS = HEIGHT_EMPIRICAL_PEAKS
         self.GRAPH_BESTS = GRAPH_BESTS
 
-def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int):
+def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int, only_distance:bool=False):
     """Funcion para hallar las calibraciones correspondientes a todas los segmentos de una ventana.
     Devuelve la mejor calibracion encontrada.
 
@@ -89,6 +93,7 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         slices_y (np.ndarray): Conjunto de arreglos entre los que se debe encontrar la mejor coincidencia
         w_range (int, optional): Rango de longitudes de onda que una ventana cubre. Defaults to 1900
         w_step (int, optional): Cantidad de longitudes de onda entre inicios de ventanas. Defaults to 100
+        only_distance (bool, optional): Parametro para dtw.dtw().
 
     Returns:
         DTW: Objeto DTW con detalles de la mejor coincidencia encontrada entre la funcion a comparar y las 
@@ -106,7 +111,8 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
                         slices_y[i], 
                         keep_internals=True, 
                         step_pattern=dtw.asymmetric, 
-                        #window_type="sakoechiba", 
+                        distance_only=only_distance,
+                        #window_type="sakoechiba", # Distance Only # Resamplear
                         #window_args={'window_size':1000},
                         open_begin=True, 
                         open_end=True
@@ -152,15 +158,18 @@ def run_calibrations(CONFIG:Config):
             'W_LENGTH', 
             'Count of Windows', 
             '(AVG) Distance', 
+            '(STD) Distance', 
             '(AVG) IoU', 
-            '(AVG) Scroll Error'
+            '(STD) IoU', 
+            '(AVG) Scroll Error',
+            '(STD) Scroll Error'
             ])
         df.to_csv(csv_path, index=False)
 
 
     # Obtencion de datos de referencia (Teorico) de donde corresponda
     if (CONFIG.USE_NIST_DATA):
-        filter:list=["He I", "Ar I", "Ar II"]
+        filter:list=["He I", "Ar I", "Ar II", "NeI"]
         teo_x, teo_y = get_Data_NIST(dirpath=CONFIG.TEORICAL_DATA_FOLDER, 
                                     name=CONFIG.TEORICAL_DATA_CSV_NAME, 
                                     filter=filter)
@@ -263,8 +272,11 @@ def run_calibrations(CONFIG:Config):
         plt.close()
             
     # Guardar datos promedios de ejecucion en CSV
+    source_aux =  "NIST" if (CONFIG.USE_NIST_DATA) else "LIBS"
+    if (source_aux=="LIBS"):
+        source_aux += "100" if("100" in CONFIG.TEORICAL_DATA_CSV_NAME) else "260"
     nueva_fila = { # Añadir la nueva fila al DataFrame
-        'Source of reference':'NIST' if (CONFIG.USE_NIST_DATA) else 'LIBS', 
+        'Source of reference':source_aux, 
         'peaks in teorical data':CONFIG.DETECT_TEORICAL_PEAKS, 
         'Treshold teorical data':CONFIG.TRESHOLD_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-', 
         'Height teorical data':CONFIG.HEIGHT_TEORICAL_PEAKS if (CONFIG.DETECT_TEORICAL_PEAKS) else '-',
@@ -277,8 +289,11 @@ def run_calibrations(CONFIG:Config):
         'W_LENGTH':CONFIG.WINDOW_LENGTH, 
         'Count of Windows':len(slices_x), 
         '(AVG) Distance':np.mean(Distances), 
+        '(STD) Distance':np.std(Distances), 
         '(AVG) IoU':np.mean(IoUs), 
-        '(AVG) Scroll Error':np.mean(EAMs)
+        '(STD) IoU':np.std(IoUs), 
+        '(AVG) Scroll Error':np.mean(EAMs),
+        '(STD) Scroll Error':np.mean(EAMs)
         }
     df = df._append(nueva_fila, ignore_index=True)
 
@@ -296,37 +311,64 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
 total_iteraciones = 3*2*2*2*2
 iteracion_actual = 1
 
-# Ejecutar calibraciones para todas las combinaciones de interes
-for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv", 
-                      "LIBS_He_Ar_Ne_Resolution=100.csv", 
-                      "LIBS_He_Ar_Ne_Resolution=260.csv"]:
-    for detect_empirical_peaks in [True, False]:
-        for detect_teorical_peaks in [True, False]:
-            for normalize_windows in [True, False]:
-                for zero_padding_bool in [True, False]:
-                    print(f"{iteracion_actual}/{total_iteraciones}")
-                    config = Config(
-                        FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
-                        FILES=files,
-                        SAVE_DIR=os.path.join(act_dir, 'output'),
-                        OUTPUT_CSV_NAME="output.csv",
+# # Ejecutar calibraciones para todas las combinaciones de interes
+# for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv", 
+#                       "LIBS_He_Ar_Ne_Resolution=100.csv", 
+#                       "LIBS_He_Ar_Ne_Resolution=260.csv"]:
+#     for detect_empirical_peaks in [True, False]:
+#         for detect_teorical_peaks in [True, False]:
+#             for normalize_windows in [True, False]:
+#                 for zero_padding_bool in [True, False]:
+#                     print(f"{iteracion_actual}/{total_iteraciones}")
+#                     config = Config(
+#                         FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
+#                         FILES=files,
+#                         SAVE_DIR=os.path.join(act_dir, 'output'),
+#                         OUTPUT_CSV_NAME="output.csv",
                         
-                        TEORICAL_DATA_FOLDER=os.path.dirname(os.path.dirname(act_dir)),
-                        TEORICAL_DATA_CSV_NAME=teorical_data_csv_name,
-                        USE_NIST_DATA= True if("NIST" in teorical_data_csv_name) else False,
+#                         TEORICAL_DATA_FOLDER=os.path.dirname(os.path.dirname(act_dir)),
+#                         TEORICAL_DATA_CSV_NAME=teorical_data_csv_name,
+#                         USE_NIST_DATA= True if("NIST" in teorical_data_csv_name) else False,
                         
-                        WINDOW_STEP=25,
-                        WINDOW_LENGTH=2000,
-                        NORMALIZE_WINDOWS=normalize_windows,
-                        ZERO_PADDING=zero_padding_bool,
-                        DETECT_TEORICAL_PEAKS=detect_teorical_peaks,
-                        TRESHOLD_TEORICAL_PEAKS=0.0,
-                        HEIGHT_TEORICAL_PEAKS=0.0,
-                        DETECT_EMPIRICAL_PEAKS=detect_empirical_peaks,
-                        TRESHOLD_EMPIRICAL_PEAKS=0.0,
-                        HEIGHT_EMPIRICAL_PEAKS=0.0,
+#                         WINDOW_STEP=25,
+#                         WINDOW_LENGTH=2000,
+#                         NORMALIZE_WINDOWS=normalize_windows,
+#                         ZERO_PADDING=zero_padding_bool,
+#                         FINAL_LINE_SPACING=False,
+#                         DETECT_TEORICAL_PEAKS=detect_teorical_peaks,
+#                         TRESHOLD_TEORICAL_PEAKS=0.0,
+#                         HEIGHT_TEORICAL_PEAKS=0.0,
+#                         DETECT_EMPIRICAL_PEAKS=detect_empirical_peaks,
+#                         TRESHOLD_EMPIRICAL_PEAKS=0.0,
+#                         HEIGHT_EMPIRICAL_PEAKS=0.0,
                         
-                        GRAPH_BESTS=True
-                    )
-                    run_calibrations(CONFIG=config)
-                    iteracion_actual += 1
+#                         GRAPH_BESTS=True
+#                     )
+#                     run_calibrations(CONFIG=config)
+#                     iteracion_actual += 1
+
+config = Config(
+    FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
+    FILES=files,
+    SAVE_DIR=os.path.join(act_dir, 'output'),
+    OUTPUT_CSV_NAME="output.csv",
+    
+    TEORICAL_DATA_FOLDER=os.path.dirname(os.path.dirname(act_dir)),
+    TEORICAL_DATA_CSV_NAME="Tabla(NIST)_Int_Long_Mat_Ref.csv",
+    USE_NIST_DATA= True,
+    
+    WINDOW_STEP=25,
+    WINDOW_LENGTH=2000,
+    NORMALIZE_WINDOWS=True,
+    ZERO_PADDING=True,
+    FINAL_LINE_SPACING=True,
+    DETECT_TEORICAL_PEAKS=False,
+    TRESHOLD_TEORICAL_PEAKS=0.0,
+    HEIGHT_TEORICAL_PEAKS=0.0,
+    DETECT_EMPIRICAL_PEAKS=False,
+    TRESHOLD_EMPIRICAL_PEAKS=0.0,
+    HEIGHT_EMPIRICAL_PEAKS=0.0,
+    
+    GRAPH_BESTS=True
+)
+run_calibrations(CONFIG=config)
