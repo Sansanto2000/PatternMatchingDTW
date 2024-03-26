@@ -148,14 +148,23 @@ def run_calibrations(CONFIG:Config):
     try: # Si existe lo lee
         df = pd.read_csv(csv_path)
     except FileNotFoundError: # Si no existe lo crea
-        df = pd.DataFrame(columns=['Source of reference', 
-                                'peaks in data', 'Treshold', 'Height'
-                                'Normalized', 
-                                'Zero Padding',
-                                'W_STEP', 'W_LENGTH', 'Count of Windows', 
-                                '(AVG) Distance', 
-                                '(AVG) IoU', 
-                                '(AVG) Scroll Error'])
+        df = pd.DataFrame(columns=[
+            'Source of reference', 
+            'peaks in teorical data', 
+            'Treshold teorical data', 
+            'Height teorical data',
+            'peaks in empirical data', 
+            'Treshold empirical data', 
+            'Height empirical data',
+            'Normalized', 
+            'Zero Padding',
+            'W_STEP', 
+            'W_LENGTH', 
+            'Count of Windows', 
+            '(AVG) Distance', 
+            '(AVG) IoU', 
+            '(AVG) Scroll Error'
+            ])
         df.to_csv(csv_path, index=False)
 
 
@@ -287,19 +296,18 @@ files = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
          "WCOMP25.fits", "WCOMP26.fits", "WCOMP27.fits", "WCOMP28.fits", "WCOMP29.fits", 
          "WCOMP30.fits", "WCOMP31.fits"]
 
+total_iteraciones = 3*2*2*2*2
+iteracion_actual = 1
+
 # Ejecutar calibraciones para todas las combinaciones de interes
 for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv", 
                       "LIBS_He_Ar_Ne_Resolution=100.csv", 
                       "LIBS_He_Ar_Ne_Resolution=260.csv"]:
-    
     for detect_empirical_peaks in [True, False]:
-        
         for detect_teorical_peaks in [True, False]:
-            
             for normalize_windows in [True, False]:
-                
                 for zero_padding_bool in [True, False]:
-                    
+                    print(f"{iteracion_actual}/{total_iteraciones}")
                     config = Config(
                         FILES_DIR=os.path.join(os.path.dirname(os.path.dirname(act_dir)), 'WCOMPs'),
                         FILES=files,
@@ -324,3 +332,4 @@ for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv",
                         GRAPH_BESTS=True
                     )
                     run_calibrations(CONFIG=config)
+                    iteracion_actual += 1
