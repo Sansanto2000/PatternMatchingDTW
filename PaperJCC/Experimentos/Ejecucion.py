@@ -227,7 +227,8 @@ def run_calibrations(CONFIG:Config):
             obs_y = obs_y[indices]
         
         # Busqueda de la mejor calibracion y obtencion de metricas
-        best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, CONFIG.W_RANGE, CONFIG.W_STEP)
+        best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, 
+                                                           CONFIG.WINDOW_LENGTH, CONFIG.WINDOW_STEP)
         
         # Dispocición en vector de las longitudes de ondas calibradas para obs
         calibrado_x = np.full(len(best_alignment.index1), None)
