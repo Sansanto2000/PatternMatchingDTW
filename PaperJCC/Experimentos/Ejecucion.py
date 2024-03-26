@@ -215,6 +215,7 @@ def run_calibrations(CONFIG:Config):
                                     )
             obs_x = obs_x[indices]
             obs_y = obs_y[indices]
+            obs_real_x = obs_real_x[indices]
         
         # Busqueda de la mejor calibracion y obtencion de metricas
         best_alignment, index = find_best_calibration(obs_y, slices_y, 
