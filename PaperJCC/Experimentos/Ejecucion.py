@@ -94,12 +94,10 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         DTW: Objeto DTW con detalles de la mejor coincidencia encontrada entre la funcion a comparar y las 
         posibles funciones objetivo
         int: Indice de la ventana que se corresponde con la mejor calibracion
-        float: IoU correspondiente a la mejor calibración
     """
 
     # Plantillas para acumulado de resultados
     alignments = np.array([])
-    IoUs = np.array([])
         
     for i in range(0, len(slices_y)):
         
@@ -114,21 +112,13 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
                         open_end=True
                         )
         
-        # Determinación de la metrica IoU
-        w_inicio = w_step*i # inicio ventana
-        w_fin = w_inicio + w_range # fin ventana
-        c_inicio = slices_x[i][alignment.index2[0]] # inicio calibrado
-        c_fin = slices_x[i][alignment.index2[-1]] # fin calibrado
-        Iou = IoU(c_inicio, c_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor calibrado
-        
         # Agrega datos a arreglo
         alignments = np.append(alignments, alignment)
-        IoUs = np.append(IoUs, Iou)
     
     # Busca el alineado con mejor metrica de distancia
     best_index = np.argmin([alig.distance for alig in alignments])
     
-    return alignments[best_index], best_index, IoUs[best_index]
+    return alignments[best_index], best_index
 
 def run_calibrations(CONFIG:Config):
     """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
@@ -230,6 +220,14 @@ def run_calibrations(CONFIG:Config):
         best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, 
                                                            CONFIG.WINDOW_LENGTH, CONFIG.WINDOW_STEP)
         
+        # Determinación de la metrica IoU
+        c_inicio = slices_x[i][best_alignment.index2[0]] # inicio calibrado
+        c_fin = slices_x[i][best_alignment.index2[-1]] # fin calibrado
+        Iou = IoU(c_inicio, c_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor calibrado
+        
+        # Determinación de la metrica Error de desplazameiento (EAM)
+        Eam = EAM(calibrado_x, obs_real_x)
+        
         # Dispocición en vector de las longitudes de ondas calibradas para obs
         calibrado_x = np.full(len(best_alignment.index1), None)
         for i in range(len(best_alignment.index1)): # Calibrado
@@ -237,8 +235,8 @@ def run_calibrations(CONFIG:Config):
             
         # Agregado de metricas en arreglos de almacenamiento
         Distances = np.append(Distances, best_alignment.distance)
-        IoUs = np.append(IoUs, IoU)
-        EAMs = np.append(EAMs, EAM(calibrado_x, obs_real_x))
+        IoUs = np.append(IoUs, Iou)
+        EAMs = np.append(EAMs, Eam)
 
     # Genera y almacena grafico de ultimo archivo en caso de que corresponda
     if (CONFIG.GRAPH_BESTS):
