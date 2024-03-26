@@ -221,8 +221,8 @@ def run_calibrations(CONFIG:Config):
                                                            CONFIG.WINDOW_LENGTH, CONFIG.WINDOW_STEP)
         
         # Determinación de la metrica IoU
-        c_inicio = slices_x[i][best_alignment.index2[0]] # inicio calibrado
-        c_fin = slices_x[i][best_alignment.index2[-1]] # fin calibrado
+        c_inicio = slices_x[index][best_alignment.index2[0]] # inicio calibrado
+        c_fin = slices_x[index][best_alignment.index2[-1]] # fin calibrado
         Iou = IoU(c_inicio, c_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor calibrado
         
         # Determinación de la metrica Error de desplazameiento (EAM)
