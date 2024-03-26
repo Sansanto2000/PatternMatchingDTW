@@ -225,9 +225,6 @@ def run_calibrations(CONFIG:Config):
         c_fin = slices_x[index][best_alignment.index2[-1]] # fin calibrado
         Iou = IoU(c_inicio, c_fin, obs_real_x[0], obs_real_x[-1]) # Segun mejor calibrado
         
-        # Determinación de la metrica Error de desplazameiento (EAM)
-        Eam = EAM(calibrado_x, obs_real_x)
-        
         # Dispocición en vector de las longitudes de ondas calibradas para obs
         calibrado_x = np.full(len(best_alignment.index1), None)
         for i in range(len(best_alignment.index1)): # Calibrado
@@ -236,7 +233,7 @@ def run_calibrations(CONFIG:Config):
         # Agregado de metricas en arreglos de almacenamiento
         Distances = np.append(Distances, best_alignment.distance)
         IoUs = np.append(IoUs, Iou)
-        EAMs = np.append(EAMs, Eam)
+        EAMs = np.append(EAMs, EAM(calibrado_x, obs_real_x))
 
     # Genera y almacena grafico de ultimo archivo en caso de que corresponda
     if (CONFIG.GRAPH_BESTS):
