@@ -3,9 +3,9 @@ import os
 import sys
 import dtw
 import math
-import tqdm
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 sys.path.append(
@@ -208,9 +208,9 @@ def run_calibrations(CONFIG:Config):
     slices_y = np.array(au_y, dtype=object)
 
     # --------PROCESADO DE ARCHIVOS-----------
-    Distances = np.array()
-    IoUs = np.array()
-    EAMs = np.array()
+    Distances = np.array([])
+    IoUs = np.array([])
+    EAMs = np.array([])
     for file in tqdm(CONFIG.FILES, desc=f'Porcentaje de avance'):
 
         # Obtencion de empirico
