@@ -217,7 +217,7 @@ def run_calibrations(CONFIG:Config):
             obs_y = obs_y[indices]
         
         # Busqueda de la mejor calibracion y obtencion de metricas
-        best_alignment, index, Iou = find_best_calibration(obs_y, slices_y, 
+        best_alignment, index = find_best_calibration(obs_y, slices_y, 
                                                            CONFIG.WINDOW_LENGTH, CONFIG.WINDOW_STEP)
         
         # Determinación de la metrica IoU
