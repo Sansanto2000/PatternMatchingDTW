@@ -10,7 +10,7 @@ from utils import get_Data_FILE
 act_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Definicion de constantes
-FINDDIR = os.path.join(os.path.dirname(act_dir), 'WCOMPs')
+FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\WCOMPs'
 FILENAME = "WCOMP01.fits"
 
 # Obtencion de empirico
@@ -18,16 +18,21 @@ obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=FINDDIR, name=FILENAME, normal
 obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 
 # grafico de lamapara empirica en bruto (sin calibrar)
-plt.figure(figsize=(12, 4), dpi=800)
+plt.figure(figsize=(24, 4), dpi=1200)
 
-plt.bar([0], [0], width=0, label='Lampara Observada', color='black', align='edge', alpha=1) # Lamp Bruto
-for x, y in zip(obs_real_x, obs_y):
-    plt.bar([x], [y], width=3, align='edge', color='black', alpha=1)
+plt.bar(obs_real_x, obs_y, width=3, label='Lampara Observada', color='black', align='edge', alpha=1) # Lamp Bruto
 
-plt.xlabel('Longitud de onda (Å)')
-plt.ylabel('Intensity')
+# Ajustar el espacio entre los ejes
+plt.subplots_adjust(left=0.08, right=0.92, top=0.82, bottom=0.1)
 
-plt.legend()
+# Ajustar el tamaño de la letra en las marcas de los ejes
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
 
-plt.savefig(os.path.join(act_dir, f"Lamp_calibrate_traditional.png"))
+plt.xlabel('Longitud de onda (Å)', fontsize=20)
+plt.ylabel('Intensity', fontsize=20)
+
+plt.legend(fontsize=18)
+
+plt.savefig(os.path.join(act_dir, f"Lamp_calibrate_traditional.svg"))
 plt.close()

@@ -18,14 +18,21 @@ obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=FINDDIR, name=FILENAME, normal
 obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 
 # grafico de lamapara empirica en bruto (sin calibrar)
-plt.figure(figsize=(12, 4), dpi=1200)
+plt.figure(figsize=(24, 4), dpi=1200)
 
-plt.bar(obs_x, obs_y, width=1.8, label='Extracted lamp', color='black', align='edge', alpha=1) # Lamp Bruto
+plt.bar(obs_x, obs_y, width=1, label='Extracted lamp', color='black', align='edge', alpha=1) # Lamp Bruto
 
-plt.xlabel('Nº pixel')
-plt.ylabel('Intensity')
+# Ajustar el espacio entre los ejes
+plt.subplots_adjust(left=0.08, right=0.92, top=0.83, bottom=0.17)
 
-plt.legend()
+# Ajustar el tamaño de la letra en las marcas de los ejes
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+
+plt.xlabel('Nº pixel', fontsize=20)
+plt.ylabel('Intensity', fontsize=20)
+
+plt.legend(fontsize=18)
 
 plt.savefig(os.path.join(act_dir, f"Lamp_brute.svg"))
 plt.close()
