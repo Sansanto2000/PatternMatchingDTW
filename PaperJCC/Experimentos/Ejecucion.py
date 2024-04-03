@@ -299,7 +299,7 @@ def run_calibrations(CONFIG:Config):
         '(AVG) IoU':np.mean(IoUs), 
         '(STD) IoU':np.std(IoUs), 
         '(AVG) Scroll Error':np.mean(EAMs),
-        '(STD) Scroll Error':np.mean(EAMs)
+        '(STD) Scroll Error':np.std(EAMs)
         }
     df = df._append(nueva_fila, ignore_index=True)
 
