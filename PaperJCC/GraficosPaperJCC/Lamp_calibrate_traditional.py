@@ -20,7 +20,7 @@ obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 # grafico de lamapara empirica en bruto (sin calibrar)
 plt.figure(figsize=(24, 4), dpi=1200)
 
-plt.bar(obs_real_x, obs_y, width=3, label='Lampara Observada', color='black', align='edge', alpha=1) # Lamp Bruto
+plt.bar(obs_real_x, obs_y, width=3, label='Calibrated lamp', color='black', align='edge', alpha=1) # Lamp Bruto
 
 # Ajustar el espacio entre los ejes
 plt.subplots_adjust(left=0.08, right=0.92, top=0.82, bottom=0.1)

@@ -10,12 +10,13 @@ from utils import get_Data_FILE, get_Data_NIST, gaussianice, normalize_min_max, 
 act_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Definicion de constantes
-FINDDIR = os.path.join(os.path.dirname(act_dir), 'WCOMPs')
+FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\WCOMPs'
 FILENAME = "WCOMP01.fits"
+ROOTDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW'
 
 # Obtencion de Teorico
 filter:list=["He I", "Ar I", "Ar II"]
-teo_x, teo_y = get_Data_NIST(dirpath=os.path.dirname(act_dir), filter=filter, normalize=True)
+teo_x, teo_y = get_Data_NIST(dirpath=ROOTDIR, filter=filter, normalize=True)
 
 # Recorte de longitudes de onda de interes
 teo_x, teo_y, _, _ = subconj_generator(teo_x, teo_y, 0, 22000)
@@ -26,23 +27,23 @@ obs_x, obs_y, obs_headers = get_Data_FILE(dirpath=FINDDIR, name=FILENAME, normal
 obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 obs_y /= 2.5
 
+#teo_x, teo_y = gaussianice(teo_x, teo_y, 80000, 20)
+#teo_y, _, _ = normalize_min_max(teo_y, min=0)
+#obs_y, _, _ = normalize_min_max(obs_y, min=0)
+#plt.plot(teo_x, teo_y, label='Datos de referencia', color='black', alpha=1) # Teorico
+
 # grafico comparacion, empirico (observado) vs teorico (referencia NIST)
-plt.figure(figsize=(12, 4), dpi=800)
+plt.figure(figsize=(24, 4), dpi=1200)
 
-plt.bar([0], [0], width=0, label='Referencia', color='blue', align='edge', alpha=1) # Teorico
-for x, y in zip(teo_x, teo_y):
-    plt.bar([x], [y], width=10, align='edge', color='blue', alpha=1)
-
-# teo_x, teo_y = gaussianice(teo_x, teo_y, 80000, 20)
-# teo_y, _, _ = normalize_min_max(teo_y)
-# plt.plot(teo_x, teo_y, label='Datos de referencia', color='black', alpha=1) # Teorico
+plt.bar(teo_x, teo_y, width=10, label='Reference data', color='blue', align='edge', alpha=1) # Teorico
     
-plt.bar([0], [0], width=0, label='Lampara Observada', color='black', align='edge', alpha=1) # Lamp Bruto
-for x, y in zip(obs_real_x, obs_y):
-    plt.bar([x], [y], width=3, align='edge', color='black', alpha=1)
+plt.bar(obs_real_x, obs_y, width=3, label='Calibrated lamp', color='black', align='edge', alpha=1) # Lamp Bruto
 
-plt.xlabel('Longitud de onda (Å)')
-plt.ylabel('Intensity')
+# Ajustar el espacio entre los ejes
+plt.subplots_adjust(left=0.08, right=0.92, top=0.83, bottom=0.17)
+
+plt.xlabel('Longitud de onda (Å)', fontsize=20)
+plt.ylabel('Intensity', fontsize=20)
 
 # Ocultar valores del eje Y
 plt.yticks([]) 
@@ -54,7 +55,7 @@ plt.yticks([])
 # ax.spines['left'].set_visible(False)
 # ax.spines['bottom'].set_visible(False)
 
-plt.legend()
+plt.legend(fontsize=18)
 
-plt.savefig(os.path.join(act_dir, f"Comparacion_de_distancias.png"))
+plt.savefig(os.path.join(act_dir, f"Comparacion_de_distancias.svg"))
 plt.close()
