@@ -11,9 +11,11 @@ from utils import get_Data_FILE, normalize_min_max
 act_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Definicion de constantes
-LAMP_FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\WCOMPs'
+#LAMP_FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\WCOMPs'
+LAMP_FINDDIR = r'/home/sponte/Documentos/Doctorado/PatternMatchingDTW/WCOMPs'
 LAMP_FILENAME = "WCOMP01.fits"
-SPEC_FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\Ws'
+#SPEC_FINDDIR = r'C:\Users\santi\OneDrive\Documentos\Doctorado\PatternMatchingDTW\Ws'
+SPEC_FINDDIR = r'/home/sponte/Documentos/Doctorado/PatternMatchingDTW/Ws'
 SPEC_FILENAME = "WOBJ01.fits"
 
 # Obtencion de empirico
@@ -32,7 +34,7 @@ plt.figure(figsize=(24, 4), dpi=1200)
 
 plt.bar(obs_real_x, spc_y, width=3, label='Spectre', color='green', align='edge', alpha=1) # Spectre
 
-plt.bar(obs_real_x, -obs_y, width=2, label='Lamp', color='black', align='edge', alpha=1) # Lamp Bruto
+plt.bar(obs_real_x, obs_y, width=2, label='Lamp', color='black', align='edge', alpha=1) # Lamp Bruto
 
 # Ajustar el espacio entre los ejes
 plt.subplots_adjust(left=0.08, right=0.92, top=0.82, bottom=0.18)
