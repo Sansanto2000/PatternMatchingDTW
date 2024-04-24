@@ -15,7 +15,7 @@ FILES = ["WCOMP01.fits", "WCOMP02.fits", "WCOMP03.fits", "WCOMP04.fits", "WCOMP0
 
 # Constantes
 HEIGHT = 0.025 # Altura minima a considerar
-SAVEPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "PeakFinder") # Especificacion de carpeta para almacenar los graficos
+SAVEPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Graficos") # Especificacion de carpeta para almacenar los graficos
 
 for filename in FILES:
     
