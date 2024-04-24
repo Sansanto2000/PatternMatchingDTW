@@ -45,14 +45,13 @@ def _getfileData(filepath:str):
         data = hdul[0].data
     return data, headers
 
-def get_Data_FILE(dirpath:str=os.path.dirname(os.path.abspath(__file__)), name:str='WCOMP01.fits', normalize:bool=True):
+def get_Data_FILE(filepath:str, normalize:bool=True):
     """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
 
     Args:
-        dirpath (str, optional): Direccion de la carpeta contenedora del archivo. Defaults to 
-        os.path.dirname(os.path.abspath(__file__)).
-        name (str, optional): Nombre del archivo. Defaults to 'WCOMP01.fits'.
-        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+        filepath (str, optional): Direccion del archivo.
+        normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar 
+        normalizados o no. Defaults to True.
 
     Returns:
         numpy.ndarray: Datos de la lampara correspondientes al eje X
