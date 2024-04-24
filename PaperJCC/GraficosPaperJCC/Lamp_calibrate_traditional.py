@@ -29,7 +29,7 @@ plt.subplots_adjust(left=0.08, right=0.92, top=0.82, bottom=0.1)
 plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 
-plt.xlabel('Longitud de onda (Å)', fontsize=20)
+plt.xlabel('Wavelength (Å)', fontsize=20)
 plt.ylabel('Intensity', fontsize=20)
 
 plt.legend(fontsize=18)

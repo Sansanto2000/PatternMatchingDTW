@@ -29,7 +29,7 @@ plt.subplots_adjust(left=0.08, right=0.92, top=0.83, bottom=0.17)
 plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 
-plt.xlabel('Nº pixel', fontsize=20)
+plt.xlabel('Pixel', fontsize=20)
 plt.ylabel('Intensity', fontsize=20)
 
 plt.legend(fontsize=18)

@@ -318,6 +318,7 @@ total_iteraciones = 3*2*2*2*2*2
 iteracion_actual = 1
 
 # Ejecutar calibraciones para todas las combinaciones de interes
+"""
 for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv", 
                       "LIBS_He_Ar_Ne_Resolution=100.csv", 
                       "LIBS_He_Ar_Ne_Resolution=260.csv"]:
@@ -353,3 +354,4 @@ for teorical_data_csv_name in ["Tabla(NIST)_Int_Long_Mat_Ref.csv",
                         )
                         run_calibrations(CONFIG=config)
                         iteracion_actual += 1
+"""
