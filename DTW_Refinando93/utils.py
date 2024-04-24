@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from astropy.io import fits
 
@@ -27,47 +26,34 @@ def normalize_min_max(target, min:float=None, max:float=None):
     nor_target = (target - min) / (max - min)
     return nor_target, min, max
 
-def _getfileData(filepath:str): 
-    """Funcion para obtener los datos de un archivo
-
-    Args:
-        filepath (str): Path del archivo
-
-    Returns:
-        numpy.ndarray: Datos del archivo
-    """
-    hdul = fits.open(filepath) 
-    if('WOBJ' in filepath):
-        headers = hdul[0].header
-        data = hdul[0].data[0][0]
-    else:
-        headers = hdul[0].header
-        data = hdul[0].data
-    return data, headers
-
-def get_Data_FILE(filepath:str, normalize:bool=True):
+def extract_lamp_info(filepath:str, normalize:bool=False):
     """Funcion para obtener los datos de un archivo correspondiente a una lampara de comparación
 
     Args:
         filepath (str, optional): Direccion del archivo.
         normalize (bool, optional): Booleano para saber si los datos de respuesta deben estar 
-        normalizados o no. Defaults to True.
+        normalizados o no. Defaults to False.
 
     Returns:
         numpy.ndarray: Datos de la lampara correspondientes al eje X
         numpy.ndarray: Datos de la lampara correspondientes al eje Y
         list: Headers adjuntos al archivo
     """
-    # Datos y headers del observado
-    filepath = os.path.join(dirpath, name)
-    obs_data, obs_headers = _getfileData(filepath=filepath)
+    # Extraer datos y headers del archivo
+    hdul = fits.open(filepath) 
+    if('WOBJ' in filepath): # Espectro calibrado
+        headers = hdul[0].header
+        data = hdul[0].data[0][0]
+    else:
+        headers = hdul[0].header
+        data = hdul[0].data
     
-    # Separacion de datos observados para el eje X y el eje Y
-    obs_x = np.array(range(len(obs_data)))
-    obs_y = obs_data
+    # Separ datos en X e Y
+    obs_x = np.array(range(len(data)))
+    obs_y = data
     
     # Normalizado de los datos obserbados en el eje Y
     if (normalize):
         obs_y, _, _ = normalize_min_max(obs_y)
     
-    return obs_x, obs_y, obs_headers
+    return obs_x, obs_y, headers
