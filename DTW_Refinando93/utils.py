@@ -80,12 +80,12 @@ class NIST_Table_Interactor:
         self.df['Wavelength(Ams)'] = self.df['Wavelength(Ams)'].apply(lambda x: re.sub(r'[^\d.]', '', x))
         self.df['Wavelength(Ams)'] = pd.to_numeric(self.df['Wavelength(Ams)'])
     
-    def get_dataframe(self, cant:int = None, filter:str=None) -> pd.DataFrame:
+    def get_dataframe(self, cant:int = None, filter=None) -> pd.DataFrame:
         """Funcion para recuperar datos del conjunto de datos analizado
 
         Args:
             cant (int, optional): Cantidad de filas que se quieren recuperar. Defaults to None.
-            filter (str, optional): Filtro de que tipo de materiales se quieren recuperar. Defaults to None.
+            filter (str, list, optional): Filtro de que tipo de materiales se quieren recuperar. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame correspondiente.
