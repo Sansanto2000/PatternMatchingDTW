@@ -1,6 +1,5 @@
-import pandas as pd
-
 import re
+import pandas as pd
 
 class NIST_Table_Interactor:
     """Clase que centraliza la logica necesaria para procesar los datos csv del NIST
