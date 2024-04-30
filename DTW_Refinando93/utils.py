@@ -175,6 +175,11 @@ def inspect_files_comparison(act_dir:str, files:dict):
     
     for material_set in files.keys():
 
+        # Determinar teorico que le corresponde
+        csvpath=os.path.join(act_dir, "NIST", "Tabla(NIST)_Int_Long_Mat_Ref.csv")
+        teo_x, teo_y = get_Data_NIST(csvpath=csvpath, filter=files[material_set]["materials"], 
+                                     normalize=True)
+
         for file in files[material_set]["files"]:
 
             # Separar informacion
@@ -187,10 +192,7 @@ def inspect_files_comparison(act_dir:str, files:dict):
                 print(f"Error archivo {file} < Falta de headers")
                 continue
 
-            # Determinar teorico que le corresponde
-            filter:list=["He I", "Ar I", "Ar II", "NeI"]
-            csvpath=os.path.join(act_dir, "NIST\\Tabla(NIST)_Int_Long_Mat_Ref.csv")
-            teo_x, teo_y = get_Data_NIST(csvpath=csvpath, filter=filter, normalize=True)
+            # Determinar subconjunto teorico de interes
             grap_teo_x, grap_teo_y = subconj_generator(teo_x, teo_y, emp_real_x[0], emp_real_x[-1])
 
             # Graficar
