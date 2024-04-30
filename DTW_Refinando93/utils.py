@@ -1,7 +1,9 @@
+import os
 import re
 import numpy as np
 import pandas as pd
 from astropy.io import fits
+import matplotlib.pyplot as plt
 
 def normalize_min_max(target, min:float=None, max:float=None):
     """Dada un arreglo de datos objetivo se normalizan sus valores entre cero y uno
@@ -161,3 +163,43 @@ def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value
             break
     
     return np.array(sub_x), np.array(sub_y)
+
+def inspect_files_comparison(act_dir:str, files:dict):
+    """Inspecciona secuencialmente distintos archivos de lampara y genera un grafico de 
+    contraste con sus correspondientes lineas de intensidad teoricas.
+
+    Args:
+        act_dir (str): directorio para buscar datos y almacenar graficos.
+        files (dict): conjunto de archivos a comparar.
+    """
+    
+    for material_set in files.keys():
+
+        for file in files[material_set]["files"]:
+
+            # Separar informacion
+            emp_x, emp_y, emp_head = extract_lamp_info(file, normalize=True)
+
+            # Determinar calibracion real
+            try:
+                emp_real_x = emp_x * emp_head['CD1_1'] + emp_head['CRVAL1']
+            except Exception as e:
+                print(f"Error archivo {file} < Falta de headers")
+                continue
+
+            # Determinar teorico que le corresponde
+            filter:list=["He I", "Ar I", "Ar II", "NeI"]
+            csvpath=os.path.join(act_dir, "NIST\\Tabla(NIST)_Int_Long_Mat_Ref.csv")
+            teo_x, teo_y = get_Data_NIST(csvpath=csvpath, filter=filter, normalize=True)
+            grap_teo_x, grap_teo_y = subconj_generator(teo_x, teo_y, emp_real_x[0], emp_real_x[-1])
+
+            # Graficar
+            plt.figure(figsize=(24, 4), dpi=600)
+            plt.bar(emp_real_x, emp_y, width=2, label='Real', color='red', align='edge', alpha=1)
+            plt.bar(grap_teo_x, grap_teo_y, width=4, label='Teorical', color='blue', align='edge', alpha=0.9)
+            plt.subplots_adjust(left=0.05, right=0.95, top=0.98, bottom=0.16)
+            plt.xlabel('Wavelength (Å)', fontsize=20)
+            plt.ylabel('Intensity', fontsize=20)
+            plt.savefig(os.path.join(act_dir,"LampGraphs", material_set, f"{os.path.basename(file)}.svg"))
+            plt.close()
+
