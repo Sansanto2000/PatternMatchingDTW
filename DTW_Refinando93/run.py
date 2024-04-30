@@ -87,12 +87,15 @@ FILES = {
     }
 }
 
-inspect_files_comparison(act_dir=act_dir, files=FILES)
-# Separar informacion
-# file = FILES["CuNeAr"]["files"][1]
-# emp_x, emp_y, emp_head = extract_lamp_info(file, normalize=True)
-# #emp_real_x = emp_x * emp_head['CD1_1'] + emp_head['CRVAL1']
-# print(emp_head["CD1_1"], emp_head["CRVAL1"])
+# inspect_files_comparison(act_dir=act_dir, files=FILES)
+#file = FILES["CuNeAr"]["files"][0]
+file = FILES["Ar"]["files"][0]
+emp_x, emp_y, emp_head = extract_lamp_info(file, normalize=True)
+emp_real_x = emp_x * emp_head['CD1_1'] + emp_head['CRVAL1']
+print(emp_x)
+print(emp_real_x)
+print(emp_head['CD1_1'])
+print(emp_head['CRVAL1'])
 
 
 # Aplicar DTW sobre cada archivo
