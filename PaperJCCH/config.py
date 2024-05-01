@@ -3,7 +3,7 @@ class Config:
     def __init__(self, FILES:list, TEORICAL_PATH:str, SAVE_DIR:str, WINDOW_STEP:int, 
                  WINDOW_LENGTH:int, NORMALIZE_WINDOWS:bool, ZERO_PADDING:bool, 
                  DETECT_TEORICAL_PEAKS:bool, DETECT_EMPIRICAL_PEAKS:bool, 
-                 GRAPH_BESTS:bool=False, OUTPUT_CSV_NAME:str="output.csv"):
+                 GRAPH:bool=False, OUTPUT_CSV_NAME:str="output.csv"):
         """Funcion de inicializacion de la clase Config
 
         Args:
@@ -20,7 +20,7 @@ class Config:
             teorico segun los picos disponibles o no.
             DETECT_EMPIRICAL_PEAKS (bool): Condicion boleana par saber si se recortara el 
             empirico segun los picos disponibles o no.
-            GRAPH_BESTS (bool, optional): Condicion boleana par saber si se generaran y 
+            GRAPH (bool, optional): Condicion boleana par saber si se generaran y 
             guardaran graficos de referencia de las mejores calibraciones o no. Default 
             False.
             OUTPUT_CSV_NAME (str, optional): Nombre del archivo csv que se generara con 
@@ -36,5 +36,5 @@ class Config:
         self.ZERO_PADDING = ZERO_PADDING
         self.DETECT_TEORICAL_PEAKS = DETECT_TEORICAL_PEAKS
         self.DETECT_EMPIRICAL_PEAKS = DETECT_EMPIRICAL_PEAKS
-        self.GRAPH_BESTS = GRAPH_BESTS
+        self.GRAPH = GRAPH
         self.OUTPUT_CSV_NAME = OUTPUT_CSV_NAME
