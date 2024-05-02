@@ -1,7 +1,11 @@
+import os
 import dtw
 import math
+import time
 import numpy as np
 from astropy.io import fits
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
 def zero_padding(arr_x:np.ndarray, arr_y:np.ndarray, dist:int):
     """Funcion para rellenar de ceros un arreglo de datos Y conforme falten valores
@@ -288,3 +292,142 @@ def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value
     
     return np.array(sub_x), np.array(sub_y)
 
+def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, window_length:int, 
+                     window_step:int, detect_teorical_peaks:bool, detect_empirical_peaks:bool, 
+                     zero_padding:bool, normalize_windows:bool, save_dir:str, graph:bool, 
+                     output_csv_path:str):
+    """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
+    Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien guarda un  grafico 
+    de muestra para comprobacion del usuario.
+
+    Args:
+        teo_x (np.ndarray): Datos teoricos para el eje X.
+        teo_y (np.ndarray): Datos teoricos para el eje Y.
+        files (np.ndarray): Conjunto de archivos de lampara a calibrar.
+        window_length (int): Rango de longitudes de onda que una ventana cubre.
+        window_step (int): Cantidad de longitudes de onda entre inicios de ventanas.
+        detect_teorical_peaks (bool): Condicion booleana para aislar picos de los datos teoricos.
+        detect_empirical_peaks (bool): Condicion booleana para aislar picos de los datos empiricoss.
+        zero_padding (bool): Condicion booleana para rellenar con ceros los espacios sin registros
+        de intensidades en los datos teoricos a usar.
+        normalize_windows (bool): Condicion booleana para normalizar individualmente las ventanas 
+        extraidas de los datos teoricos.
+        save_dir (str): Path a la carpeta donde guardar los resultados.
+        graph (bool): Condicion booleana para saber si se deben generar graficos de las calibraciones 
+        generadas o no.
+        output_csv_path (str): Path al CSV donde guardar los resultados estadisticos.
+    """
+
+    # Aislado de picos (si corresponde)
+    if (detect_teorical_peaks):
+        indices, _ = find_peaks(teo_y, threshold=[0.0, np.inf], height= [0.0, np.inf])
+        teo_x = teo_x[indices]
+        teo_y = teo_y[indices]
+
+    # Rellenado de ceros (si corresponde)
+    if (zero_padding):
+        teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
+        
+    # Ventanado del Teorico
+    ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, window_length, 
+                                                    window_step, normalize_windows)
+            
+    #Filtrar aquellos arreglos que no tienen elementos
+    au_x = []
+    au_y = []
+    for i in range(len(slices_x)):
+        if (len(slices_x[i]) > 0):
+            au_x.append(slices_x[i])
+            au_y.append(slices_y[i])
+    slices_x = np.array(au_x, dtype=object)
+    slices_y = np.array(au_y, dtype=object)
+
+    # Procesado de los archivos Fe
+    Distances = np.array([])
+    IoUs = np.array([])
+    EAMs = np.array([])
+    Times = np.array([])
+    for file in files:
+            
+        # Separar informacion
+        emp_x, emp_y, emp_head = extract_lamp_info(file, normalize=True)
+
+        # Determinar calibracion real
+        try:
+            emp_real_x = emp_x * emp_head['CD1_1'] + emp_head['CRVAL1']
+        except Exception as e:
+            print(f"Error archivo {file} < Falta de headers")
+            continue
+        
+        # Aislado de picos (si corresponde)
+        if (detect_empirical_peaks):
+            indices, _ = find_peaks(obs_y, threshold=[0.0, np.inf], height= [0.0, np.inf])
+            obs_x = obs_x[indices]
+            obs_y = obs_y[indices]
+            obs_real_x = obs_real_x[indices]
+
+        # Registro del tiempo de inicio
+        start = time.time()
+        
+        # Determinar calibracion con DTW
+        best_alignment, index = find_best_calibration(emp_y, slices_y, window_length, window_step)
+        
+        # Registro del tiempo transcurrido
+        end = time.time()        
+        transcurred_time = end - start
+        
+        # Dispocición en vector de las longitudes de ondas calibradas
+        calibrado_x = np.full(len(best_alignment.index1), None)
+        for i in range(len(best_alignment.index1)): # Calibrado
+            calibrado_x[best_alignment.index1[i]] = slices_x[index][best_alignment.index2[i]]
+
+        # ACOMODAR A PARTIR DE ACA
+        # Determinación de la metrica IoU 
+        c_inicio = slices_x[index][best_alignment.index2[0]] # inicio calibrado
+        c_fin = slices_x[index][best_alignment.index2[-1]] # fin calibrado
+        Iou = IoU(c_inicio, c_fin, emp_real_x[0], emp_real_x[-1]) # Segun mejor calibrado
+        
+        # Agregado de metricas en arreglos de almacenamiento
+        Distances = np.append(Distances, best_alignment.distance)
+        IoUs = np.append(IoUs, Iou)
+        EAMs = np.append(EAMs, EAM(calibrado_x, emp_real_x))
+        Times = np.append(Times, transcurred_time)
+
+        if(graph): 
+            plt.figure(figsize=(12, 4), dpi=600) # Ajuste de tamaño de la figura
+
+            min_teo_grap = calibrado_x[0] if calibrado_x[0] < emp_real_x[0] else emp_real_x[0] # Seccion del teorico
+            min_teo_grap -= window_step
+            max_teo_grap = calibrado_x[-1] if calibrado_x[-1] > emp_real_x[-1] else emp_real_x[-1]
+            max_teo_grap += window_step
+            grap_teo_x, grap_teo_y, _, _ = subconj_generator(teo_x, teo_y, min_teo_grap, max_teo_grap)
+            plt.bar(grap_teo_x, -grap_teo_y, width=10, label='Teorical', color='blue', align='edge', alpha=0.7) 
+            plt.bar(emp_real_x, emp_y, width=2, label='Emp Real', color='black', align='edge', alpha=0.7) # Real
+            plt.bar(calibrado_x, emp_y, width=3, label='Emp Calibrated', color='red', align='edge', alpha=1) # Hallado
+            plt.legend()
+            fig_name = f"{os.path.splitext(os.path.basename(file))[0]}"
+            fig_name += "_EP" if(detect_empirical_peaks) else ""
+            fig_name += "_TP" if(detect_teorical_peaks) else ""
+            fig_name += "_NOR" if(normalize_windows) else ""
+            fig_name += "_ZP" if(zero_padding) else ""
+            plt.savefig(os.path.join(save_dir, f"{fig_name}.svg"))
+            plt.close()
+            
+    # Guardar datos promedios de ejecucion en CSV
+    nueva_fila = { # Añadir la nueva fila al DataFrame
+        'Teorical peaks':detect_teorical_peaks, 
+        'Empirical peaks':detect_empirical_peaks, 
+        'Normalized':normalize_windows, 
+        'Zero Padding':zero_padding,
+        'W_STEP':window_step, 
+        'W_LENGTH':window_length, 
+        'Count of Windows':len(slices_x),
+        'Distance':f"{np.mean(Distances)} \u00B1({np.std(Distances)})", 
+        'IoU':f"{np.mean(IoUs)} \u00B1({np.std(IoUs)})",
+        'Scroll Error':f"{np.mean(EAMs)} \u00B1({np.std(EAMs)})",
+        'Time':f"{np.mean(Times)} \u00B1({np.std(Times)})"
+        
+    }
+    df = df._append(nueva_fila, ignore_index=True)
+    df.to_csv(output_csv_path, index=False) # Guardar DataFrame actualizado
+    
