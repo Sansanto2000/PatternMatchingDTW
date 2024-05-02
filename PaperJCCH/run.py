@@ -128,7 +128,7 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
 
 # Especificar lamparas a analizar
 act_dir = os.path.dirname(os.path.abspath(__file__))
-FILES = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
+files = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
     "materials": ["Fe I", "Fe II"],
     "files": [
         os.path.join(act_dir, os.path.join("LampData","Fe","...")),
@@ -138,15 +138,13 @@ FILES = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
 }
 
 teorical_path = os.path.join(act_dir, "TeoricalData", "...")
-config = Config(FILES=FILES, TEORICAL_PATH=teorical_path, SAVE_DIR=None,
-                WINDOW_STEP=None, WINDOW_LENGTH=None, NORMALIZE_WINDOWS=None,
-                ZERO_PADDING=None, DETECT_TEORICAL_PEAKS=None, 
-                DETECT_EMPIRICAL_PEAKS=None, GRAPH=True,
+save_dir = os.path.join(act_dir, 'output')
+config = Config(FILES=files, TEORICAL_PATH=teorical_path, SAVE_DIR=save_dir,
+                WINDOW_STEP=25, WINDOW_LENGTH=3000, GRAPH=True,
                 OUTPUT_CSV_NAME="output.csv")
 
 # Preparar CSV para persistencia de resultados
-save_dir = os.path.join(act_dir, 'output')
-output_csv_path = os.path.join(save_dir, config.OUTPUT_CSV_NAME)
+output_csv_path = os.path.join(config.SAVE_DIR, config.OUTPUT_CSV_NAME)
 try: # Si existe lo lee
     df = pd.read_csv(output_csv_path)
 except FileNotFoundError: # Si no existe lo crea
@@ -160,7 +158,8 @@ except FileNotFoundError: # Si no existe lo crea
         'Count of Windows', 
         'Distance', 
         'IoU', 
-        'Scroll Error'
+        'Scroll Error',
+        'Time'
         ])
     df.to_csv(output_csv_path, index=False)
 
@@ -180,8 +179,8 @@ for detect_teorical_peaks in [True, False]:
                     teo_x=teo_x, 
                     teo_y=teo_y, 
                     files=config.FILES,
-                    window_length=3000,
-                    window_step=25,
+                    window_length=config.WINDOW_LENGTH,
+                    window_step=config.WINDOW_STEP,
                     detect_teorical_peaks=detect_teorical_peaks,
                     detect_empirical_peaks=detect_empirical_peaks,
                     zero_padding=zero_padding_bool,
