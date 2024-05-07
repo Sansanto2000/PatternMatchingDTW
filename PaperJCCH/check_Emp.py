@@ -16,6 +16,7 @@ except Exception as e:
     print(f"Error archivo {file} < Falta de headers")
 
 print(teo_real_x)
+print(len(teo_x))
 
 plt.figure(figsize=(12, 4), dpi=600) # Ajuste de tamaño de la figura
 plt.bar(teo_real_x, teo_y, width=1, label='Empirical', color='blue', align='edge', alpha=1) 
