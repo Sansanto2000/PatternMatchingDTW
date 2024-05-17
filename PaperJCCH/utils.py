@@ -3,6 +3,7 @@ import dtw
 import math
 import time
 import numpy as np
+import pandas as pd
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
@@ -294,7 +295,7 @@ def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value
 
 def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, window_length:int, 
                      window_step:int, detect_teorical_peaks:bool, detect_empirical_peaks:bool, 
-                     zero_padding:bool, normalize_windows:bool, save_dir:str, graph:bool, 
+                     zero_padding_bool:bool, normalize_windows:bool, save_dir:str, graph:bool, 
                      output_csv_path:str):
     """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
     Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien guarda un  grafico 
@@ -308,7 +309,7 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         window_step (int): Cantidad de longitudes de onda entre inicios de ventanas.
         detect_teorical_peaks (bool): Condicion booleana para aislar picos de los datos teoricos.
         detect_empirical_peaks (bool): Condicion booleana para aislar picos de los datos empiricoss.
-        zero_padding (bool): Condicion booleana para rellenar con ceros los espacios sin registros
+        zero_padding_bool (bool): Condicion booleana para rellenar con ceros los espacios sin registros
         de intensidades en los datos teoricos a usar.
         normalize_windows (bool): Condicion booleana para normalizar individualmente las ventanas 
         extraidas de los datos teoricos.
@@ -318,15 +319,38 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         output_csv_path (str): Path al CSV donde guardar los resultados estadisticos.
     """
 
+    # Preparar CSV para persistencia de resultados
+    output_csv_path = os.path.join(save_dir, os.path.basename(output_csv_path))
+    try: # Si existe lo lee
+        df = pd.read_csv(output_csv_path)
+    except FileNotFoundError: # Si no existe lo crea
+        df = pd.DataFrame(columns=[
+            'Teorical peaks',
+            'Empirical peaks', 
+            'Normalized', 
+            'Zero Padding',
+            'W_STEP', 
+            'W_LENGTH', 
+            'Count of Windows', 
+            'Distance', 
+            'IoU', 
+            'Scroll Error',
+            'Time'
+            ])
+        df.to_csv(output_csv_path, index=False)
+    
     # Aislado de picos (si corresponde)
     if (detect_teorical_peaks):
-        indices, _ = find_peaks(teo_y, threshold=[0.0, np.inf], height= [0.0, np.inf])
+        teo_y, _, _ = normalize_min_max(teo_y)
+        indices, _ = find_peaks(teo_y, threshold=[0.0, np.inf], height= [0.01, np.inf])
+        print(len(indices))
+        print('-----------')
         teo_x = teo_x[indices]
         teo_y = teo_y[indices]
 
     # Rellenado de ceros (si corresponde)
-    if (zero_padding):
-        teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=10)
+    if (zero_padding_bool):
+        teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=1.5)
         
     # Ventanado del Teorico
     ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, window_length, 
@@ -361,11 +385,14 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         
         # Aislado de picos (si corresponde)
         if (detect_empirical_peaks):
-            indices, _ = find_peaks(obs_y, threshold=[0.0, np.inf], height= [0.0, np.inf])
-            obs_x = obs_x[indices]
-            obs_y = obs_y[indices]
-            obs_real_x = obs_real_x[indices]
-
+            indices, _ = find_peaks(emp_y, threshold=[0.0, np.inf], height= [0.2, np.inf])
+            print(len(indices))
+            emp_x = emp_x[indices]
+            emp_y = emp_y[indices]
+            emp_real_x = emp_real_x[indices]
+        
+        print('OK1')
+        
         # Registro del tiempo de inicio
         start = time.time()
         
@@ -375,6 +402,8 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         # Registro del tiempo transcurrido
         end = time.time()        
         transcurred_time = end - start
+        
+        print('OK2')
         
         # Dispocición en vector de las longitudes de ondas calibradas
         calibrado_x = np.full(len(best_alignment.index1), None)
@@ -409,7 +438,7 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
             fig_name += "_EP" if(detect_empirical_peaks) else ""
             fig_name += "_TP" if(detect_teorical_peaks) else ""
             fig_name += "_NOR" if(normalize_windows) else ""
-            fig_name += "_ZP" if(zero_padding) else ""
+            fig_name += "_ZP" if(zero_padding_bool) else ""
             plt.savefig(os.path.join(save_dir, f"{fig_name}.svg"))
             plt.close()
             
@@ -418,7 +447,7 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         'Teorical peaks':detect_teorical_peaks, 
         'Empirical peaks':detect_empirical_peaks, 
         'Normalized':normalize_windows, 
-        'Zero Padding':zero_padding,
+        'Zero Padding':zero_padding_bool,
         'W_STEP':window_step, 
         'W_LENGTH':window_length, 
         'Count of Windows':len(slices_x),
