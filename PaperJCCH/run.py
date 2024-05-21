@@ -78,7 +78,7 @@ run_calibrations(
                 window_length=config.WINDOW_LENGTH,
                 window_step=config.WINDOW_STEP,
                 detect_teorical_peaks=False,
-                detect_empirical_peaks=True,
+                detect_empirical_peaks=False,
                 zero_padding_bool=True,
                 normalize_windows=True,
                 save_dir=save_dir,

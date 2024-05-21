@@ -177,7 +177,9 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
     """
 
     # Plantillas para acumulado de resultados
-    alignments = np.array([])
+    best_distance = np.inf
+    best_aligment = None
+    best_index = None
         
     for i in range(0, len(slices_y)):
         
@@ -193,13 +195,12 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
                         open_end=True
                         )
         
-        # Agrega datos a arreglo
-        alignments = np.append(alignments, alignment)
-        
-    # Busca el alineado con mejor metrica de distancia
-    best_index = np.argmin([alig.distance for alig in alignments])
+        if (alignment.distance < best_distance):
+            best_distance = alignment.distance
+            best_aligment = alignment
+            best_index = i
     
-    return alignments[best_index], best_index
+    return best_aligment, best_index
 
 def IoU(obs_min:float, obs_max:float, real_min:float, real_max:float) -> float:
     """Funcion para realizar el calculo de [Interseccion / Union] dados dos rangos de valores
