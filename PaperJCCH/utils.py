@@ -186,7 +186,7 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         # Aplicación DTW del observado respecto al gaussianizado
         alignment = dtw.dtw(obs_y, 
                         slices_y[i], 
-                        keep_internals=True, 
+                        keep_internals=False, 
                         step_pattern=dtw.asymmetric, 
                         #distance_only=only_distance, # No hizo nada
                         #window_type="sakoechiba", # Resamplear
@@ -405,6 +405,16 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         transcurred_time = end - start
         
         print('OK2')
+
+        print('-------------------------------')
+        print(f"best_alignment.index1=[{best_alignment.index1[0]}, "+
+              f"{best_alignment.index1[1]}, ...{best_alignment.index1[-1]}]")
+        print(f"len={len(best_alignment.index1)}")
+        print('-------------------------------')
+        print(f"best_alignment.index2=[{best_alignment.index2[0]}, "+
+              f"{best_alignment.index2[1]}, ...{best_alignment.index2[-1]}]")
+        print(f"len={len(best_alignment.index2)}")
+        print('-------------------------------')
         
         # Dispocición en vector de las longitudes de ondas calibradas
         calibrado_x = np.full(len(best_alignment.index1), None)
