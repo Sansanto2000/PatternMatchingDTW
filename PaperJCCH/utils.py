@@ -195,7 +195,7 @@ def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_
         
         # Agrega datos a arreglo
         alignments = np.append(alignments, alignment)
-    
+        
     # Busca el alineado con mejor metrica de distancia
     best_index = np.argmin([alig.distance for alig in alignments])
     

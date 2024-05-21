@@ -7,10 +7,10 @@ from utils import extract_lamp_info, concateAndExtractTeoricalFiles, normalize_m
 # Especificar archivo teorico a emplear
 act_dir = os.path.dirname(os.path.abspath(__file__))
 files = [
-    os.path.join(act_dir, 'Cartones_Info', 'W_Lamp01.fits'),
-    os.path.join(act_dir, 'Cartones_Info', 'W_Lamp02.fits'),
-    os.path.join(act_dir, 'Cartones_Info', 'W_Lamp03.fits'),
-    os.path.join(act_dir, 'Cartones_Info', 'W_Lamp04.fits'),
+    # os.path.join(act_dir, 'Cartones_Info', 'W_Lamp01.fits'),
+    # os.path.join(act_dir, 'Cartones_Info', 'W_Lamp02.fits'),
+    # os.path.join(act_dir, 'Cartones_Info', 'W_Lamp03.fits'),
+    # os.path.join(act_dir, 'Cartones_Info', 'W_Lamp04.fits'),
     os.path.join(act_dir, 'Cartones_Info', 'W_Lamp05.fits'),
     os.path.join(act_dir, 'Cartones_Info', 'W_Lamp06.fits'),
     os.path.join(act_dir, 'Cartones_Info', 'W_Lamp07.fits'),
