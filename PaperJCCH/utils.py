@@ -344,8 +344,8 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
     if (detect_teorical_peaks):
         teo_y, _, _ = normalize_min_max(teo_y)
         indices, _ = find_peaks(teo_y, threshold=[0.0, np.inf], height= [0.01, np.inf])
-        print(len(indices))
-        print('-----------')
+        #print(len(indices))
+        #print('-----------')
         teo_x = teo_x[indices]
         teo_y = teo_y[indices]
 
@@ -387,12 +387,12 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         # Aislado de picos (si corresponde)
         if (detect_empirical_peaks):
             indices, _ = find_peaks(emp_y, threshold=[0.0, np.inf], height= [0.2, np.inf])
-            print(len(indices))
+            #print(len(indices))
             emp_x = emp_x[indices]
             emp_y = emp_y[indices]
             emp_real_x = emp_real_x[indices]
         
-        print('OK1')
+        # print('OK1')
         
         # Registro del tiempo de inicio
         start = time.time()
@@ -404,17 +404,17 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         end = time.time()        
         transcurred_time = end - start
         
-        print('OK2')
+        # print('OK2')
 
-        print('-------------------------------')
-        print(f"best_alignment.index1=[{best_alignment.index1[0]}, "+
-              f"{best_alignment.index1[1]}, ...{best_alignment.index1[-1]}]")
-        print(f"len={len(best_alignment.index1)}")
-        print('-------------------------------')
-        print(f"best_alignment.index2=[{best_alignment.index2[0]}, "+
-              f"{best_alignment.index2[1]}, ...{best_alignment.index2[-1]}]")
-        print(f"len={len(best_alignment.index2)}")
-        print('-------------------------------')
+        # print('-------------------------------')
+        # print(f"best_alignment.index1=[{best_alignment.index1[0]}, "+
+        #       f"{best_alignment.index1[1]}, ...{best_alignment.index1[-1]}]")
+        # print(f"len={len(best_alignment.index1)}")
+        # print('-------------------------------')
+        # print(f"best_alignment.index2=[{best_alignment.index2[0]}, "+
+        #       f"{best_alignment.index2[1]}, ...{best_alignment.index2[-1]}]")
+        # print(f"len={len(best_alignment.index2)}")
+        # print('-------------------------------')
         
         # Dispocición en vector de las longitudes de ondas calibradas
         calibrado_x = np.full(len(best_alignment.index1), None)

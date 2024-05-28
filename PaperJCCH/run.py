@@ -28,13 +28,14 @@ act_dir = os.path.dirname(os.path.abspath(__file__))
 files = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
     os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp1.fits")),
     # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp2.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp1.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp1.fits")),
     # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp2.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp1.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp1.fits")),
     # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp2.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp1.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp1.fits")),
     # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp2.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp1.fits"))
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp2.fits"))
 }
 
 # Definicion de direccion para el guardado de resultados
@@ -48,40 +49,40 @@ config = Config(FILES=files, SAVE_DIR=save_dir, WINDOW_STEP=75,
 output_csv_path = os.path.join(config.SAVE_DIR, config.OUTPUT_CSV_NAME)
 
 # Ejecutar calibraciones para todas las combinaciones de interes
-# total_iteraciones = 2*2*2
-# iteracion_actual = 1
-# for detect_teorical_peaks in [True, False]:
-#     for detect_empirical_peaks in [True, False]:
-#         for normalize_windows in [True, False]:
-#             #for zero_padding_bool in [True, False]:
-#             print(f"{iteracion_actual}/{total_iteraciones}")
-#             run_calibrations(
+total_iteraciones = 2*2*2*2
+iteracion_actual = 1
+for detect_teorical_peaks in [True, False]:
+    for detect_empirical_peaks in [True, False]:
+        for normalize_windows in [True, False]:
+            for zero_padding_bool in [True, False]:
+                print(f"{iteracion_actual}/{total_iteraciones}")
+                run_calibrations(
+                    teo_x=teo_x, 
+                    teo_y=teo_y, 
+                    files=config.FILES,
+                    window_length=config.WINDOW_LENGTH,
+                    window_step=config.WINDOW_STEP,
+                    detect_teorical_peaks=detect_teorical_peaks,
+                    detect_empirical_peaks=detect_empirical_peaks,
+                    zero_padding_bool=zero_padding_bool,
+                    normalize_windows=normalize_windows,
+                    save_dir=save_dir,
+                    graph=config.GRAPH,
+                    output_csv_path=output_csv_path
+                    )
+                iteracion_actual += 1
+# print("INICIO")
+# run_calibrations(
 #                 teo_x=teo_x, 
 #                 teo_y=teo_y, 
 #                 files=config.FILES,
 #                 window_length=config.WINDOW_LENGTH,
 #                 window_step=config.WINDOW_STEP,
-#                 detect_teorical_peaks=detect_teorical_peaks,
-#                 detect_empirical_peaks=detect_empirical_peaks,
-#                 zero_padding_bool=False,
-#                 normalize_windows=normalize_windows,
+#                 detect_teorical_peaks=False,
+#                 detect_empirical_peaks=False,
+#                 zero_padding_bool=True,
+#                 normalize_windows=True,
 #                 save_dir=save_dir,
 #                 graph=config.GRAPH,
 #                 output_csv_path=output_csv_path
 #                 )
-#             iteracion_actual += 1
-
-run_calibrations(
-                teo_x=teo_x, 
-                teo_y=teo_y, 
-                files=config.FILES,
-                window_length=config.WINDOW_LENGTH,
-                window_step=config.WINDOW_STEP,
-                detect_teorical_peaks=False,
-                detect_empirical_peaks=False,
-                zero_padding_bool=True,
-                normalize_windows=True,
-                save_dir=save_dir,
-                graph=config.GRAPH,
-                output_csv_path=output_csv_path
-                )
