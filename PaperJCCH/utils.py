@@ -297,7 +297,8 @@ def subconj_generator(conj_x:np.ndarray, conj_y:np.ndarray, value_min:int, value
 def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, window_length:int, 
                      window_step:int, detect_teorical_peaks:bool, detect_empirical_peaks:bool, 
                      zero_padding_bool:bool, normalize_windows:bool, save_dir:str, graph:bool, 
-                     output_csv_path:str):
+                     output_csv_path:str, teorical_weed_out:bool, empirical_weed_out:bool, 
+                     minimal_data_for_weed_out:int):
     """Funcion que realiza un conjunto de calibraciones completo sobre un conjunto de archivos.
     Almacena datos estadisticos varios de la ejecucion en un archivo CSV. Tambien guarda un  grafico 
     de muestra para comprobacion del usuario.
@@ -310,7 +311,7 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         window_step (int): Cantidad de longitudes de onda entre inicios de ventanas.
         detect_teorical_peaks (bool): Condicion booleana para aislar picos de los datos teoricos.
         detect_empirical_peaks (bool): Condicion booleana para aislar picos de los datos empiricoss.
-        zero_padding_bool (bool): Condicion booleana para rellenar con ceros los espacios sin registros
+        zero_padding_bool (bool): Condicion booleana para rellenar con ceros los espacios sin registros 
         de intensidades en los datos teoricos a usar.
         normalize_windows (bool): Condicion booleana para normalizar individualmente las ventanas 
         extraidas de los datos teoricos.
@@ -318,6 +319,12 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         graph (bool): Condicion booleana para saber si se deben generar graficos de las calibraciones 
         generadas o no.
         output_csv_path (str): Path al CSV donde guardar los resultados estadisticos.
+        teorical_weed_out (bool): condicion booleana para saber si se debe realizar un desmalezado de 
+        datos teoricos o no.
+        empirical_weed_out (bool): condicion booleana para saber si se debe realizar un desmalezado de 
+        datos empiricos o no.
+        minimal_data_for_weed_out (int): valor minimo a considerar para detener el desmalezado de un 
+        conjunto de datos.
     """
 
     # Preparar CSV para persistencia de resultados
@@ -330,6 +337,9 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
             'Empirical peaks', 
             'Normalized', 
             'Zero Padding',
+            'Teorical WeedOut',
+            'Empirical WeedOut',
+            'WeedOut Min Value',
             'W_STEP', 
             'W_LENGTH', 
             'Count of Windows', 
@@ -352,6 +362,9 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
     # Rellenado de ceros (si corresponde)
     if (zero_padding_bool):
         teo_x, teo_y = zero_padding(arr_x=teo_x, arr_y=teo_y, dist=1.5)
+    
+    if (teorical_weed_out):
+        teo_x, teo_y, _ = weedOut(teo_x, teo_y, minimal_data_for_weed_out, 8)
         
     # Ventanado del Teorico
     ranges, slices_x, slices_y = slice_with_range_step(teo_x, teo_y, window_length, 
@@ -391,6 +404,9 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
             emp_x = emp_x[indices]
             emp_y = emp_y[indices]
             emp_real_x = emp_real_x[indices]
+            
+        if (empirical_weed_out):
+            emp_real_x, emp_y, _ = weedOut(emp_real_x, emp_y, minimal_data_for_weed_out, 8)
         
         # print('OK1')
         
@@ -459,6 +475,9 @@ def run_calibrations(teo_x:np.ndarray, teo_y:np.ndarray, files:np.ndarray, windo
         'Empirical peaks':detect_empirical_peaks, 
         'Normalized':normalize_windows, 
         'Zero Padding':zero_padding_bool,
+        'Teorical WeedOut': teorical_weed_out,
+        'Empirical WeedOut': empirical_weed_out,
+        'WeedOut Min Value': minimal_data_for_weed_out,
         'W_STEP':window_step, 
         'W_LENGTH':window_length, 
         'Count of Windows':len(slices_x),
