@@ -553,3 +553,30 @@ def concateAndExtractTeoricalFiles(files:list, epsilon):
             total_y = np.concatenate([y1, y_filtrado, y2])
 
     return total_x, total_y
+
+def weedOut(arr_x:np.ndarray , arr_y:np.ndarray, min_data:int, mowing_function_grade:int):
+    """Funcion para 'desmalezar' conjuntos de pares de datos.
+
+    Args:
+        arr_x (numpy.ndarray): arreglo de datos en el eje X.
+        arr_y (numpy.ndarray): arreglo de datos en el eje Y.
+        min_data (int): cantidad minima de valores a considerar.
+        mowing_function_grade (int): grado de la funcion de desmalezado a entrenar.
+
+    Returns:
+        numpy.ndarray: arreglo X desmalezado.
+        numpy.ndarray: arreglo Y desmalezado.
+        int: cantidad de iteraciones realizadas hasta recortar suficientes datos.
+    """
+    
+    iter = 0
+    while (len(arr_x) > min_data):
+        iter += 1
+        coeficientes = np.polyfit(arr_x, arr_y, mowing_function_grade)
+        polinomio = np.poly1d(coeficientes)
+        emp_fit_y = polinomio(arr_x)
+        indices = arr_y > emp_fit_y
+        arr_x = arr_x[indices]
+        arr_y = arr_y[indices]
+    
+    return arr_x, arr_y, iter
