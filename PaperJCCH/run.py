@@ -1,8 +1,5 @@
 import os
-import numpy as np
-import pandas as pd
-from config import Config
-from utils import run_calibrations, concateAndExtractTeoricalFiles
+from utils import concateAndExtractTeoricalFiles, process_batch
 
 # Obtencion de datos teoricos
 EPSILON = 0.055
@@ -38,45 +35,16 @@ files = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
     # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp2.fits"))
 }
 
-# Definicion de direccion para el guardado de resultados
-save_dir = os.path.join(act_dir, 'output')
+print('-----------------------------------------')
+print(f'Informacion de los cartones:')
+process_batch(teo_x, teo_y, files)
 
-# Especificacion de variables de configuracion
-config = Config(FILES=files, SAVE_DIR=save_dir, WINDOW_STEP=75, 
-                WINDOW_LENGTH=2000, GRAPH=False, OUTPUT_CSV_NAME="output.csv")
+print('-----------------------------------------')
+print(f'Informacion del NIST:')
 
-# Preparar CSV para persistencia de resultados
-output_csv_path = os.path.join(config.SAVE_DIR, config.OUTPUT_CSV_NAME)
+print('-----------------------------------------')
+print(f'Informacion de Iraft:')
 
-# Ejecutar calibraciones para todas las combinaciones de interes
-total_iteraciones = 2*2*2*2*2*2*3
-iteracion_actual = 1
-for detect_teorical_peaks in [True, False]:
-    for detect_empirical_peaks in [True, False]:
-        for normalize_windows in [True, False]:
-            for zero_padding_bool in [True, False]:
-                for teorical_weed_out in [True, False]:
-                    for empirical_weed_out in [True, False]:
-                        for minimal_data_for_weed_out in [20, 100, 1000]:
-                            print(f"{iteracion_actual}/{total_iteraciones}")
-                            run_calibrations(
-                                teo_x=teo_x, 
-                                teo_y=teo_y, 
-                                files=config.FILES,
-                                window_length=config.WINDOW_LENGTH,
-                                window_step=config.WINDOW_STEP,
-                                detect_teorical_peaks=detect_teorical_peaks,
-                                detect_empirical_peaks=detect_empirical_peaks,
-                                zero_padding_bool=zero_padding_bool,
-                                normalize_windows=normalize_windows,
-                                save_dir=save_dir,
-                                graph=config.GRAPH,
-                                output_csv_path=output_csv_path,
-                                teorical_weed_out=teorical_weed_out, 
-                                empirical_weed_out=empirical_weed_out, 
-                                minimal_data_for_weed_out=minimal_data_for_weed_out
-                                )
-                            iteracion_actual += 1
 # print("INICIO")
 # run_calibrations(
 #     teo_x=teo_x, 

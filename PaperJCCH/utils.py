@@ -4,6 +4,7 @@ import math
 import time
 import numpy as np
 import pandas as pd
+from config import Config
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
@@ -599,3 +600,54 @@ def weedOut(arr_x:np.ndarray , arr_y:np.ndarray, min_data:int, mowing_function_g
         arr_y = arr_y[indices]
     
     return arr_x, arr_y, iter
+
+def process_batch(teo_x:np.ndarray, teo_y:np.ndarray, files:dict):
+    """Funcion que realiza el procesado de un conjunto de archivos variando los valores
+    de sus posibles parametros de ejecución.
+
+    Args:
+        teo_x (numpy.ndarray): datos teoricos a usar. Correspondientes al eje X.
+        teo_y (numpy.ndarray): datos teoricos a usar. Correspondientes al eje Y.
+        files (dict): conjunto de paths de los archivos a analizar.
+    """
+    
+    # Definicion de direccion para el guardado de resultados
+    act_dir = os.path.dirname(os.path.abspath(__file__))
+    save_dir = os.path.join(act_dir, 'output')
+
+    # Especificacion de variables de configuracion
+    config = Config(FILES=files, SAVE_DIR=save_dir, WINDOW_STEP=75, 
+                    WINDOW_LENGTH=2000, GRAPH=False, OUTPUT_CSV_NAME="output.csv")
+
+    # Preparar CSV para persistencia de resultados
+    output_csv_path = os.path.join(config.SAVE_DIR, config.OUTPUT_CSV_NAME)
+
+    # Ejecutar calibraciones para todas las combinaciones de interes
+    total_iteraciones = 2*2*2*2*2*2*3
+    iteracion_actual = 1
+    for detect_teorical_peaks in [True, False]:
+        for detect_empirical_peaks in [True, False]:
+            for normalize_windows in [True, False]:
+                for zero_padding_bool in [True, False]:
+                    for teorical_weed_out in [True, False]:
+                        for empirical_weed_out in [True, False]:
+                            for minimal_data_for_weed_out in [20, 100, 1000]:
+                                print(f"{iteracion_actual}/{total_iteraciones}")
+                                run_calibrations(
+                                    teo_x=teo_x, 
+                                    teo_y=teo_y, 
+                                    files=config.FILES,
+                                    window_length=config.WINDOW_LENGTH,
+                                    window_step=config.WINDOW_STEP,
+                                    detect_teorical_peaks=detect_teorical_peaks,
+                                    detect_empirical_peaks=detect_empirical_peaks,
+                                    zero_padding_bool=zero_padding_bool,
+                                    normalize_windows=normalize_windows,
+                                    save_dir=save_dir,
+                                    graph=config.GRAPH,
+                                    output_csv_path=output_csv_path,
+                                    teorical_weed_out=teorical_weed_out, 
+                                    empirical_weed_out=empirical_weed_out, 
+                                    minimal_data_for_weed_out=minimal_data_for_weed_out
+                                    )
+                                iteracion_actual += 1
