@@ -161,6 +161,85 @@ def extract_lamp_info(filepath:str, normalize:bool=False):
     
     return obs_x, obs_y, headers
 
+def get_Data_NIST(dirpath:str, name:str, filter:list=None, normalize:bool=True):
+    """Funcion para obtener los datos teoricos a analizar desde los datos del NIST.
+
+    Args:
+        dirpath (str, optional): direccion de la carpeta contenedora del archivo.
+        name (str, optional): nombre del archivo.
+        filter (list, optional): elementos quimicos de los que se quieren los picos. Defaults to None.
+        normalize (bool, optional): booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+
+    Returns:
+        numpy.ndarray: Datos del teorico correspondientes al eje X
+        numpy.ndarray: Datos del teorico correspondientes al eje Y
+    """
+    
+    class NIST_Table_Interactor:
+        """Clase que centraliza la logica necesaria para procesar los datos csv del NIST
+        """
+        
+        df = None
+        
+        def __init__(self, csv_filename):
+            self.df = pd.read_csv(csv_filename)
+            self._sanitize()
+            
+        def _sanitize(self):
+            """Funcion para sanitizar los campos especificos del dataset y convertirlos
+            en datos del tipo requerido.
+            """
+            self.df['Intensity'] = self.df['Intensity'].str.replace(r'[^0-9]+', '', regex=True)
+            self.df['Intensity'] = pd.to_numeric(self.df['Intensity'])
+            
+            self.df['Wavelength(Ams)'] = self.df['Wavelength(Ams)'].apply(lambda x: re.sub(r'[^\d.]', '', x))
+            self.df['Wavelength(Ams)'] = pd.to_numeric(self.df['Wavelength(Ams)'])
+        
+        def get_dataframe(self, cant:int = None, filter:str=None) -> pd.DataFrame:
+            """Funcion para recuperar datos del conjunto de datos analizado
+
+            Args:
+                cant (int, optional): Cantidad de filas que se quieren recuperar. Defaults to None.
+                filter (str, optional): Filtro de que tipo de materiales se quieren recuperar. Defaults to None.
+
+            Returns:
+                pd.DataFrame: DataFrame correspondiente.
+            """
+            df = None
+                
+            if (cant):
+                df = self.df.head(cant) 
+            else:
+                df = self.df
+                
+            if (filter):
+                if (type(filter) == str):
+                    df = df[df['Spectrum'] == filter]
+                else:
+                    df = df[df['Spectrum'].isin(filter)]
+                
+            return df
+        
+    # Datos de teoricos del NIST
+    filepath = os.path.join(dirpath, name)
+    nisttr = NIST_Table_Interactor(csv_filename=filepath)
+
+    # Obtencion del dataframe
+    if(filter is None):
+        teorico_df = nisttr.get_dataframe()
+    else:
+        teorico_df = nisttr.get_dataframe(filter=filter)
+
+    # Separacion de datos teoricos para el eje X y el eje Y
+    teo_x = np.array(teorico_df['Wavelength(Ams)'])
+    teo_y = np.array(teorico_df['Intensity'])
+    
+    # Normalizado de los datos en el eje Y
+    if (normalize):
+        teo_y, _, _ = normalize_min_max(target=teo_y)
+    
+    return teo_x, teo_y
+
 def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int):
     """Funcion para hallar las calibraciones correspondientes a todas los segmentos de una ventana.
     Devuelve la mejor calibracion encontrada.

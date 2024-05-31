@@ -45,3 +45,4 @@ class NIST_Table_Interactor:
                 df = df[df['Spectrum'].isin(filter)]
             
         return df
+    

@@ -1,7 +1,23 @@
 import os
-from utils import concateAndExtractTeoricalFiles, process_batch
+from utils import concateAndExtractTeoricalFiles, process_batch, get_Data_NIST
 
-# Obtencion de datos teoricos
+# Especificar lamparas a analizar
+act_dir = os.path.dirname(os.path.abspath(__file__))
+files = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp2.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp2.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp2.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp2.fits")),
+    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp1.fits")),
+    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp2.fits"))
+}
+
+print('-----------------------------------------')
+# Obtencion de datos teoricos (CARTONES)
 EPSILON = 0.055
 act_dir = os.path.dirname(os.path.abspath(__file__))
 teo_files = [
@@ -20,30 +36,24 @@ teo_x, teo_y = concateAndExtractTeoricalFiles(teo_files, EPSILON)
 teo_x = teo_x[teo_y >= 0]
 teo_y = teo_y[teo_y >= 0]
 
-# Especificar lamparas a analizar
-act_dir = os.path.dirname(os.path.abspath(__file__))
-files = {   # Usamos las 3 lamparas Full 'Fe' calibradas por Meilan.
-    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp1.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1466Blamp2.fits")),
-    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp1.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1467Blamp2.fits")),
-    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp1.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1576Blamp2.fits")),
-    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp1.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1581Blamp2.fits")),
-    os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp1.fits")),
-    # os.path.join(act_dir, os.path.join("Lamparas_Meilan","w1600Blamp2.fits"))
-}
-
-print('-----------------------------------------')
 print(f'Informacion de los cartones:')
 process_batch(teo_x, teo_y, files)
 
 print('-----------------------------------------')
+# Obtencion de datos teoricos (NIST)
+act_dir = os.path.dirname(os.path.abspath(__file__))
+teo_x, teo_y = get_Data_NIST(
+    dirpath=act_dir, 
+    name='Tabla(NIST)_Int_Long_Mat_Ref.csv', 
+    filter=["Fe I", "Fe II"], 
+    normalize=True)
+
 print(f'Informacion del NIST:')
+process_batch(teo_x, teo_y, files)
 
 print('-----------------------------------------')
 print(f'Informacion de Iraft:')
+#process_batch(teo_x, teo_y, files)
 
 # print("INICIO")
 # run_calibrations(
