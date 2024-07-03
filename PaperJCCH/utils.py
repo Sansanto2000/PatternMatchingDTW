@@ -696,7 +696,7 @@ def process_batch(teo_x:np.ndarray, teo_y:np.ndarray, files:dict):
 
     # Especificacion de variables de configuracion
     config = Config(FILES=files, SAVE_DIR=save_dir, WINDOW_STEP=75, 
-                    WINDOW_LENGTH=2000, GRAPH=False, OUTPUT_CSV_NAME="output.csv")
+                    WINDOW_LENGTH=3000, GRAPH=False, OUTPUT_CSV_NAME="output.csv")
 
     # Preparar CSV para persistencia de resultados
     output_csv_path = os.path.join(config.SAVE_DIR, config.OUTPUT_CSV_NAME)
