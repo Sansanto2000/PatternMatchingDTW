@@ -19,7 +19,7 @@ filter:list=["He I", "Ar I", "Ar II"]
 teo_x, teo_y = get_Data_NIST(dirpath=ROOTDIR, filter=filter, normalize=True)
 
 # Recorte de longitudes de onda de interes
-teo_x, teo_y, _, _ = subconj_generator(teo_x, teo_y, 0, 20000)
+teo_x, teo_y, _, _ = subconj_generator(teo_x, teo_y, 2000, 8000)
 teo_y = -teo_y
 
 # Obtencion de empirico
@@ -35,9 +35,10 @@ obs_real_x = obs_x * obs_headers['CD1_1'] + obs_headers['CRVAL1']
 # grafico comparacion, empirico (observado) vs teorico (referencia NIST)
 plt.figure(figsize=(24, 6), dpi=1200)
 
-plt.bar(teo_x, teo_y, width=10, label='Reference data', color='blue', align='edge', alpha=1) # Teorico
-    
-plt.bar(obs_real_x, obs_y, width=3, label='Calibrated lamp', color='black', align='edge', alpha=1) # Lamp Bruto
+#plt.bar(teo_x, teo_y, width=10, label='Reference data', color='blue', align='edge', alpha=1) # Teorico
+#plt.bar(obs_real_x, obs_y, width=3, label='Calibrated lamp', color='black', align='edge', alpha=1) # Lamp Bruto
+plt.bar(obs_real_x+750, obs_y, width=3, label='Calculated', color='black', align='edge', alpha=1) # Calculated
+plt.bar(obs_real_x, -obs_y, width=3, label='Real', color='green', align='edge', alpha=1) # Calculated
 
 # Ajustar el espacio entre los ejes
 plt.subplots_adjust(left=0.03, right=0.97, top=0.95, bottom=0.17)
@@ -45,6 +46,7 @@ plt.subplots_adjust(left=0.03, right=0.97, top=0.95, bottom=0.17)
 plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 plt.yticks([0]) # Ocultar valores del eje Y
+plt.xlim(right=7000)
 
 plt.xlabel('Wavelength (Å)', fontsize=20)
 plt.ylabel('Intensity', fontsize=20)
