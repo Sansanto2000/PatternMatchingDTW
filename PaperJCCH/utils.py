@@ -241,6 +241,36 @@ def get_Data_NIST(dirpath:str, name:str, filter:list=None, normalize:bool=True):
     
     return teo_x, teo_y
 
+def get_Data_IRAF(dirpath:str, name:str, normalize:bool=True):
+    """Funcion para obtener los datos teoricos a analizar desde .dat de IRAF.
+
+    Args:
+        dirpath (str, optional): direccion de la carpeta contenedora del archivo.
+        name (str, optional): nombre del archivo.
+        normalize (bool, optional): booleano para saber si los datos de respuesta deben estar normalizados o no. Defaults to True.
+
+    Returns:
+        numpy.ndarray: Datos del teorico correspondientes al eje X
+        numpy.ndarray: Datos del teorico correspondientes al eje Y
+    """
+        
+    # Datos de teoricos del NIST
+    filepath = os.path.join(dirpath, name)
+    df = pd.read_csv(filepath, delimiter=' ')
+    df = df.drop(columns=['Unnamed: 1'])
+    print(df)
+    df['Wavelength'] = pd.to_numeric(df['Wavelength'])
+
+    # Separacion de datos teoricos para el eje X y el eje Y
+    teo_x = np.array(df['Wavelength'])
+    teo_y = np.ones(teo_x.shape)
+    
+    # Normalizado de los datos en el eje Y
+    if (normalize):
+        teo_y, _, _ = normalize_min_max(target=teo_y)
+    
+    return teo_x, teo_y
+
 def find_best_calibration(obs_y:np.ndarray, slices_y:np.ndarray, w_range:int, w_step:int):
     """Funcion para hallar las calibraciones correspondientes a todas los segmentos de una ventana.
     Devuelve la mejor calibracion encontrada.
