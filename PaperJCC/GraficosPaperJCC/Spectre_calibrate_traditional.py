@@ -32,9 +32,9 @@ spc_real_x = obs_x * spc_headers['CD1_1'] + spc_headers['CRVAL1']
 # grafico de lamapara empirica en bruto (sin calibrar)
 plt.figure(figsize=(24, 4), dpi=1200)
 
-plt.bar(obs_real_x, spc_y, width=3, label='Spectre', color='green', align='edge', alpha=1) # Spectre
+plt.bar(obs_real_x, spc_y, width=3, label='Spectrum', color='green', align='edge', alpha=1) # Spectre
 
-plt.bar(obs_real_x, obs_y, width=2, label='Lamp', color='black', align='edge', alpha=1) # Lamp Bruto
+plt.bar(obs_real_x, obs_y, width=2, label='Lamp spectrum', color='black', align='edge', alpha=1) # Lamp Bruto
 
 # Ajustar el espacio entre los ejes
 plt.subplots_adjust(left=0.08, right=0.92, top=0.82, bottom=0.18)
